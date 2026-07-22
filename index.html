@@ -12,6 +12,7 @@
   <script src="https://cdn.tailwindcss.com"></script>
   <!-- Google Fonts -->
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+  
   <style>
     body { font-family: 'Inter', sans-serif; }
     ::-webkit-scrollbar { width: 6px; height: 6px; }
@@ -24,6 +25,110 @@
       background: rgba(226, 232, 240, 0.6); cursor: col-resize; user-select: none;
     }
     .resizer:hover, .resizing { background: #059669; }
+
+    /* Drag and Drop styling */
+    tr.dragging {
+      opacity: 0.4;
+      background-color: #f0fdf4 !important;
+    }
+    .drag-handle { cursor: grab; }
+    .drag-handle:active { cursor: grabbing; }
+
+    /* REGRAS DE IMPRESSÃO / COMPRESSÃO A4 PAISAGEM */
+    @page {
+      size: A4 landscape;
+      margin: 8mm;
+    }
+
+    @media print {
+      /* Ocultar elementos desnecessários na impressão */
+      header, #auth-screen, .no-print, button, input, select, .resizer {
+        display: none !important;
+      }
+
+      body {
+        background: white !important;
+        color: black !important;
+        font-size: 8pt !important;
+        -webkit-print-color-adjust: exact !important;
+        print-color-adjust: exact !important;
+      }
+
+      main {
+        max-width: 100% !important;
+        padding: 0 !important;
+        margin: 0 !important;
+        width: 100% !important;
+      }
+
+      .bg-white {
+        box-shadow: none !important;
+        border: none !important;
+        padding: 0 !important;
+        margin-bottom: 8px !important;
+      }
+
+      /* Título do Projeto em Destaque na Impressão */
+      #print-project-header {
+        display: block !important;
+        text-align: center;
+        border-bottom: 2px solid #047857;
+        padding-bottom: 6px;
+        margin-bottom: 12px;
+      }
+
+      #print-project-header h1 {
+        font-size: 16pt !important;
+        font-weight: 800 !important;
+        color: #065f46 !important;
+        text-transform: uppercase;
+        letter-spacing: 0.5px;
+      }
+
+      #print-project-header p {
+        font-size: 8pt !important;
+        color: #475569 !important;
+      }
+
+      /* Formatação Comprimida dos KPIs */
+      .grid {
+        display: flex !important;
+        gap: 8px !important;
+        margin-bottom: 10px !important;
+      }
+
+      .grid > div {
+        flex: 1 !important;
+        padding: 6px 8px !important;
+        border: 1px solid #cbd5e1 !important;
+        border-radius: 6px !important;
+      }
+
+      /* Tabela ultra-compacta para caber na folha */
+      table {
+        width: 100% !important;
+        table-layout: auto !important;
+        font-size: 7.5pt !important;
+        border-collapse: collapse !important;
+      }
+
+      th, td {
+        border: 1px solid #cbd5e1 !important;
+        padding: 3px 4px !important;
+        word-wrap: break-word !important;
+        white-space: normal !important;
+      }
+
+      th {
+        background-color: #f1f5f9 !important;
+        color: #1e293b !important;
+        font-weight: 700 !important;
+        text-transform: uppercase !important;
+        font-size: 7pt !important;
+      }
+
+      .drag-handle { display: none !important; }
+    }
   </style>
 </head>
 <body class="bg-slate-50 text-slate-800 min-h-screen flex flex-col">
@@ -122,9 +227,14 @@
             </button>
 
             <button onclick="openDuplicateModal()" title="Replicar a estrutura deste projeto" class="bg-amber-600 hover:bg-amber-500 text-white p-1.5 rounded-md text-xs font-semibold transition px-2.5 whitespace-nowrap">
-              📋 Replicar Projeto
+              📋 Replicar
             </button>
           </div>
+
+          <!-- BOTÃO DE IMPRESSÃO / PDF -->
+          <button onclick="window.print()" title="Imprimir em A4 Paisagem ou Guardar em PDF" class="bg-sky-600 hover:bg-sky-500 text-white font-medium px-3.5 py-2 rounded-lg shadow-sm transition-all flex items-center justify-center gap-1.5 text-sm active:scale-95 whitespace-nowrap">
+            🖨️ Imprimir / PDF
+          </button>
 
           <button onclick="openModalForNew()" class="bg-emerald-600 hover:bg-emerald-500 text-white font-medium px-4 py-2 rounded-lg shadow-sm transition-all flex items-center justify-center gap-2 text-sm active:scale-95">
             <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
@@ -140,6 +250,12 @@
     <!-- Main Container -->
     <main class="max-w-[98vw] mx-auto px-2 sm:px-4 py-6 flex-grow w-full">
 
+      <!-- CABEÇALHO EXCLUSIVO PARA IMPRESSÃO EM DESTAQUE -->
+      <div id="print-project-header" class="hidden">
+        <h1 id="print-project-name">PLANO DE AÇÕES DO PROJETO</h1>
+        <p id="print-date-subtitle">Relatório gerado em: --/--/----</p>
+      </div>
+
       <!-- Dashboard KPI Cards -->
       <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 mb-4">
         <div id="kpi-card-all" onclick="setKpiFilter('todos')" class="bg-white p-4 rounded-xl shadow-sm border-2 border-emerald-500 hover:border-emerald-600 cursor-pointer transition flex items-center justify-between group">
@@ -147,7 +263,7 @@
             <span class="text-xs font-semibold uppercase tracking-wider text-slate-400 group-hover:text-slate-600">Total de Tarefas</span>
             <p id="kpi-total" class="text-2xl font-bold text-slate-800 mt-1">0</p>
           </div>
-          <div class="w-10 h-10 rounded-lg bg-slate-100 flex items-center justify-center text-slate-500">📋</div>
+          <div class="w-10 h-10 rounded-lg bg-slate-100 flex items-center justify-center text-slate-500 no-print">📋</div>
         </div>
 
         <div id="kpi-card-completed" onclick="setKpiFilter('Concluído')" class="bg-white p-4 rounded-xl shadow-sm border-2 border-transparent hover:border-emerald-400 cursor-pointer transition flex items-center justify-between group">
@@ -155,7 +271,7 @@
             <span class="text-xs font-semibold uppercase tracking-wider text-emerald-600">Concluídas</span>
             <p id="kpi-completed" class="text-2xl font-bold text-emerald-600 mt-1">0</p>
           </div>
-          <div class="w-10 h-10 rounded-lg bg-emerald-50 flex items-center justify-center text-emerald-600">✅</div>
+          <div class="w-10 h-10 rounded-lg bg-emerald-50 flex items-center justify-center text-emerald-600 no-print">✅</div>
         </div>
 
         <div id="kpi-card-pending" onclick="setKpiFilter('pendentes')" class="bg-white p-4 rounded-xl shadow-sm border-2 border-transparent hover:border-amber-400 cursor-pointer transition flex items-center justify-between group">
@@ -163,7 +279,7 @@
             <span class="text-xs font-semibold uppercase tracking-wider text-amber-600">Em Curso / Pendentes</span>
             <p id="kpi-pending" class="text-2xl font-bold text-amber-600 mt-1">0</p>
           </div>
-          <div class="w-10 h-10 rounded-lg bg-amber-50 flex items-center justify-center text-amber-600">⏳</div>
+          <div class="w-10 h-10 rounded-lg bg-amber-50 flex items-center justify-center text-amber-600 no-print">⏳</div>
         </div>
 
         <div class="bg-white p-4 rounded-xl shadow-sm border border-slate-200 flex items-center justify-between">
@@ -172,12 +288,12 @@
             <p id="kpi-total-cost" class="text-xl font-bold text-blue-800 mt-1">0,00 €</p>
             <span id="kpi-cost-breakdown" class="text-[10px] text-slate-500 mt-0.5 block">Infralobo: 0 € | Parceiros: 0 €</span>
           </div>
-          <div class="w-10 h-10 rounded-lg bg-blue-50 flex items-center justify-center text-blue-600">💶</div>
+          <div class="w-10 h-10 rounded-lg bg-blue-50 flex items-center justify-center text-blue-600 no-print">💶</div>
         </div>
       </div>
 
       <!-- CENTRO DE APRENDIZAGEM -->
-      <div class="bg-white rounded-xl shadow-sm border border-slate-200/80 p-4 mb-4">
+      <div class="bg-white rounded-xl shadow-sm border border-slate-200/80 p-4 mb-4 no-print">
         <div class="flex justify-between items-center cursor-pointer" onclick="toggleLearningCenter()">
           <div class="flex items-center gap-2">
             <span class="text-lg">💡</span>
@@ -197,7 +313,7 @@
       </div>
 
       <!-- PAINEL DO GRÁFICO DE GANTT -->
-      <div class="bg-white rounded-xl shadow-sm border border-slate-200/80 p-4 mb-4">
+      <div class="bg-white rounded-xl shadow-sm border border-slate-200/80 p-4 mb-4 no-print">
         <div class="flex justify-between items-center cursor-pointer" onclick="toggleGantt()">
           <div class="flex items-center gap-2">
             <span class="text-lg">📊</span>
@@ -216,11 +332,12 @@
       <div class="bg-white rounded-xl shadow-sm border border-slate-200/80 overflow-hidden">
         
         <!-- Toolbar de Filtros -->
-        <div class="p-3 border-b border-slate-200 bg-slate-50/80 space-y-3">
+        <div class="p-3 border-b border-slate-200 bg-slate-50/80 space-y-3 no-print">
           <div class="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-3">
             <div class="flex items-center gap-2">
               <h2 id="current-project-title" class="font-semibold text-slate-700 text-sm sm:text-base">Lista de Ações</h2>
               <span id="task-count-badge" class="bg-slate-200 text-slate-700 text-xs px-2 py-0.5 rounded-full font-medium">0</span>
+              <span id="reorder-status" class="text-[11px] text-amber-600 font-medium hidden">⏳ A guardar nova ordem...</span>
             </div>
 
             <div class="flex items-center gap-2 w-full sm:w-auto justify-end">
@@ -283,24 +400,25 @@
           <table id="resizable-table" class="w-full text-left border-collapse table-fixed">
             <thead>
               <tr class="bg-slate-100/80 text-slate-600 text-[11px] font-semibold uppercase tracking-wider border-b border-slate-200">
-                <th style="width: 100px;" class="py-2.5 px-2">Fase</th>
-                <th style="width: 200px;" class="py-2.5 px-2">Tarefa</th>
-                <th style="width: 120px;" class="py-2.5 px-2">Progresso</th>
-                <th style="width: 140px;" class="py-2.5 px-2">Responsabilidade</th>
-                <th style="width: 160px;" class="py-2.5 px-2">Instituições / Contactos</th>
-                <th style="width: 110px;" class="py-2.5 px-2">Urgência</th>
-                <th style="width: 100px;" class="py-2.5 px-2">Data de início</th>
-                <th style="width: 100px;" class="py-2.5 px-2">Data de fim</th>
-                <th style="width: 140px;" class="py-2.5 px-2">Custos</th>
-                <th style="width: 160px;" class="py-2.5 px-2">Notas</th>
-                <th style="width: 60px;" class="py-2.5 px-2 text-center">Fotos</th>
-                <th style="width: 170px;" class="py-2.5 px-2">Histórico (Auditoria)</th>
-                <th style="width: 90px;" class="py-2.5 px-2 text-center">Ações</th>
+                <th style="width: 30px;" class="py-2.5 px-1 text-center no-print"></th>
+                <th style="width: 80px;" class="py-2.5 px-2">Fase</th>
+                <th style="width: 180px;" class="py-2.5 px-2">Tarefa</th>
+                <th style="width: 100px;" class="py-2.5 px-2">Progresso</th>
+                <th style="width: 130px;" class="py-2.5 px-2">Responsabilidade</th>
+                <th style="width: 140px;" class="py-2.5 px-2">Instituições / Contactos</th>
+                <th style="width: 90px;" class="py-2.5 px-2">Urgência</th>
+                <th style="width: 85px;" class="py-2.5 px-2">Início</th>
+                <th style="width: 85px;" class="py-2.5 px-2">Fim</th>
+                <th style="width: 120px;" class="py-2.5 px-2">Custos</th>
+                <th style="width: 150px;" class="py-2.5 px-2">Notas</th>
+                <th style="width: 55px;" class="py-2.5 px-2 text-center no-print">Fotos</th>
+                <th style="width: 140px;" class="py-2.5 px-2">Histórico</th>
+                <th style="width: 70px;" class="py-2.5 px-2 text-center no-print">Ações</th>
               </tr>
             </thead>
             <tbody id="task-list" class="divide-y divide-slate-100 text-xs">
               <tr>
-                <td colspan="13" class="text-center p-12 text-slate-400">
+                <td colspan="14" class="text-center p-12 text-slate-400">
                   <div class="inline-block animate-spin rounded-full h-8 w-8 border-4 border-slate-200 border-t-emerald-600 mb-2"></div>
                   <p>A carregar dados...</p>
                 </td>
@@ -313,8 +431,8 @@
 
   </div>
 
-  <!-- MODAL 1: Criar Novo Projeto -->
-  <div id="project-modal" class="fixed inset-0 bg-slate-900/50 backdrop-blur-sm hidden flex items-center justify-center p-4 z-50">
+  <!-- MODAIS -->
+  <div id="project-modal" class="fixed inset-0 bg-slate-900/50 backdrop-blur-sm hidden flex items-center justify-center p-4 z-50 no-print">
     <div class="bg-white rounded-2xl shadow-2xl w-full max-w-md overflow-hidden">
       <div class="bg-slate-50 px-6 py-4 border-b border-slate-200 flex justify-between items-center">
         <h3 class="text-base font-bold text-slate-800 flex items-center gap-2">📁 Criar Novo Projeto</h3>
@@ -333,8 +451,7 @@
     </div>
   </div>
 
-  <!-- MODAL DUPLICAR PROJETO -->
-  <div id="duplicate-modal" class="fixed inset-0 bg-slate-900/50 backdrop-blur-sm hidden flex items-center justify-center p-4 z-50">
+  <div id="duplicate-modal" class="fixed inset-0 bg-slate-900/50 backdrop-blur-sm hidden flex items-center justify-center p-4 z-50 no-print">
     <div class="bg-white rounded-2xl shadow-2xl w-full max-w-md overflow-hidden">
       <div class="bg-amber-500 text-white px-6 py-4 flex justify-between items-center">
         <h3 class="text-base font-bold flex items-center gap-2">📋 Replicar Projeto Reutilizável</h3>
@@ -358,8 +475,7 @@
     </div>
   </div>
 
-  <!-- MODAL TAREFA (Criar / Editar) -->
-  <div id="modal" class="fixed inset-0 bg-slate-900/50 backdrop-blur-sm hidden flex items-center justify-center p-4 z-50 overflow-y-auto">
+  <div id="modal" class="fixed inset-0 bg-slate-900/50 backdrop-blur-sm hidden flex items-center justify-center p-4 z-50 overflow-y-auto no-print">
     <div class="bg-white rounded-2xl shadow-2xl w-full max-w-2xl my-8 overflow-hidden">
       
       <div class="bg-slate-50 px-6 py-4 border-b border-slate-200 flex justify-between items-center">
@@ -402,14 +518,12 @@
         <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
           <div>
             <label class="block text-xs font-semibold text-slate-600 uppercase tracking-wider mb-1">Responsabilidade Geral</label>
-            <input type="text" id="input-responsabilidade" placeholder="Ex: Infralobo; Capitania (separar por ;)" class="w-full border border-slate-300 rounded-lg p-2.5 text-sm focus:ring-2 focus:ring-emerald-500 outline-none">
-            <span class="text-[10px] text-slate-400">Podes indicar mais do que uma entidade separando por ponto e vírgula (;)</span>
+            <input type="text" id="input-responsabilidade" placeholder="Ex: Infralobo; Capitania" class="w-full border border-slate-300 rounded-lg p-2.5 text-sm focus:ring-2 focus:ring-emerald-500 outline-none">
           </div>
 
           <div>
             <label class="block text-xs font-semibold text-slate-600 uppercase tracking-wider mb-1">Instituições / Contactos</label>
-            <input type="text" id="input-instituicoes" placeholder="Ex: Capitania; Escolas; Dunas Douradas" class="w-full border border-slate-300 rounded-lg p-2.5 text-sm focus:ring-2 focus:ring-emerald-500 outline-none">
-            <span class="text-[10px] text-slate-400">Podes indicar mais do que uma instituição separando por ponto e vírgula (;)</span>
+            <input type="text" id="input-instituicoes" placeholder="Ex: Capitania; Escolas" class="w-full border border-slate-300 rounded-lg p-2.5 text-sm focus:ring-2 focus:ring-emerald-500 outline-none">
           </div>
         </div>
 
@@ -462,7 +576,7 @@
     </div>
   </div>
 
-  <!-- JavaScript Logic -->
+  <!-- LÓGICA JAVASCRIPT -->
   <script>
     const API_URL = "https://script.google.com/macros/s/AKfycbw_Unni-QHjpMRT2gwPR8Q4MzmigHZ8gvrLS_jUU-AgAhU0jrsujQ1odl8e_eLV59T55Q/exec";
 
@@ -471,7 +585,8 @@
     let rawTasksData = [];
     let selectedKpiFilter = "todos";
 
-    // INICIALIZAÇÃO DA SESSÃO
+    let draggedRow = null;
+
     window.addEventListener("DOMContentLoaded", () => {
       const savedUser = localStorage.getItem("app_user");
       if (savedUser) {
@@ -585,7 +700,6 @@
       return cleanStr;
     }
 
-    // Auxiliar para criar Badges visuais quando existem múltiplos itens separados por ;
     function renderMultiBadges(textValue, badgeBgClass = "bg-slate-100 text-slate-700 border-slate-200") {
       if (!textValue || textValue === "-") return '<span class="text-slate-300">-</span>';
       
@@ -638,6 +752,12 @@
       document.getElementById("current-project-title").innerText = `Lista de Ações — ${currentProject}`;
       document.getElementById("modal-project-name").innerText = currentProject;
       document.getElementById("dup-source-name").innerText = currentProject;
+      
+      // Atualiza também o cabeçalho impresso em A4
+      document.getElementById("print-project-name").innerText = `PLANO DE AÇÕES: ${currentProject.toUpperCase()}`;
+      const now = new Date();
+      const dateStr = `${String(now.getDate()).padStart(2, '0')}/${String(now.getMonth() + 1).padStart(2, '0')}/${now.getFullYear()} ${String(now.getHours()).padStart(2, '0')}:${String(now.getMinutes()).padStart(2, '0')}`;
+      document.getElementById("print-date-subtitle").innerText = `Relatório gerado em: ${dateStr}`;
     }
 
     async function fetchTasks() {
@@ -647,7 +767,7 @@
 
       tbody.innerHTML = `
         <tr>
-          <td colspan="13" class="text-center p-12 text-slate-400">
+          <td colspan="14" class="text-center p-12 text-slate-400">
             <div class="inline-block animate-spin rounded-full h-7 w-7 border-4 border-slate-200 border-t-emerald-600 mb-2"></div>
             <p>A carregar tarefas de <strong>${currentProject || "projeto"}</strong>...</p>
           </td>
@@ -668,7 +788,7 @@
         renderGanttChart(rawTasksData);
 
       } catch (error) {
-        tbody.innerHTML = `<tr><td colspan="13" class="text-center p-8 text-red-500 bg-red-50/50">⚠️ Erro ao carregar tarefas.</td></tr>`;
+        tbody.innerHTML = `<tr><td colspan="14" class="text-center p-8 text-red-500 bg-red-50/50">⚠️ Erro ao carregar tarefas.</td></tr>`;
       } finally {
         if (refreshIcon) refreshIcon.classList.remove("animate-spin");
       }
@@ -682,14 +802,10 @@
 
       data.forEach(item => {
         const rRaw = item.Responsabilidade || item.responsabilidade;
-        if (rRaw) {
-          String(rRaw).split(";").forEach(s => { if (s.trim()) resps.add(s.trim()); });
-        }
+        if (rRaw) String(rRaw).split(";").forEach(s => { if (s.trim()) resps.add(s.trim()); });
         
         const iRaw = item["Instituições / Contactos"] || item["Instituições/ empresas a contactar"] || item.instituicoes;
-        if (iRaw) {
-          String(iRaw).split(";").forEach(s => { if (s.trim()) insts.add(s.trim()); });
-        }
+        if (iRaw) String(iRaw).split(";").forEach(s => { if (s.trim()) insts.add(s.trim()); });
       });
 
       respSelect.innerHTML = '<option value="">Todas</option>';
@@ -765,13 +881,44 @@
       tbody.innerHTML = "";
 
       if (!data || data.length === 0) {
-        tbody.innerHTML = `<tr><td colspan="13" class="text-center p-8 text-slate-400">Nenhuma tarefa encontrada com os filtros selecionados.</td></tr>`;
+        tbody.innerHTML = `<tr><td colspan="14" class="text-center p-8 text-slate-400">Nenhuma tarefa encontrada.</td></tr>`;
         return;
       }
 
-      data.forEach((item) => {
+      data.forEach((item, index) => {
         const row = document.createElement("tr");
         row.className = "hover:bg-slate-50/80 transition border-b border-slate-100";
+        row.draggable = true;
+        row.dataset.taskIndex = rawTasksData.indexOf(item);
+
+        // EVENTOS DRAG AND DROP
+        row.addEventListener("dragstart", (e) => {
+          draggedRow = row;
+          row.classList.add("dragging");
+          e.dataTransfer.effectAllowed = "move";
+        });
+
+        row.addEventListener("dragend", () => {
+          row.classList.remove("dragging");
+          draggedRow = null;
+          saveNewTaskOrder();
+        });
+
+        row.addEventListener("dragover", (e) => {
+          e.preventDefault();
+          if (draggedRow && draggedRow !== row) {
+            const bounding = row.getBoundingClientRect();
+            const offset = e.clientY - bounding.top;
+            if (offset > bounding.height / 2) {
+              tbody.insertBefore(draggedRow, row.nextSibling);
+            } else {
+              tbody.insertBefore(draggedRow, row);
+            }
+          }
+        });
+
+        // 0. Drag Handle
+        const dragHandle = `<td class="p-2 text-center text-slate-300 hover:text-slate-600 drag-handle no-print" title="Arrastar para reordenar">⋮⋮</td>`;
 
         // 1. Fase
         const faseVal = item.Fase || item.fase || "Pré-evento";
@@ -798,15 +945,14 @@
           progressBadge = '<span class="px-2 py-0.5 rounded-full text-[10px] font-medium bg-red-100 text-red-700 border border-red-200 whitespace-nowrap">Cancelado</span>';
         }
 
-        // 4. Responsabilidade (Múltiplas entidades)
+        // 4 & 5. Responsabilidade e Contactos
         const respVal = item.Responsabilidade || item.responsabilidade || "";
         const respBadges = renderMultiBadges(respVal, "bg-slate-100 text-slate-700 border-slate-200");
 
-        // 5. Instituições / Contactos (Múltiplas entidades)
         const instVal = item["Instituições / Contactos"] || item["Instituições/ empresas a contactar"] || item.instituicoes || "";
         const instBadges = renderMultiBadges(instVal, "bg-indigo-50 text-indigo-700 border-indigo-200");
 
-        // 6. Urgência / Importância
+        // 6. Urgência
         const urgenciaVal = item["Urgência / Importância"] || item["Urgência/ Importância"] || item.urgencia || "Normal";
         let urgencyBadge = '<span class="text-slate-500 text-[11px]">Normal</span>';
         if (String(urgenciaVal).includes("Urgente")) {
@@ -815,13 +961,9 @@
           urgencyBadge = '<span class="px-1.5 py-0.5 rounded text-[10px] font-semibold bg-blue-100 text-blue-700 border border-blue-200 whitespace-nowrap">Importante</span>';
         }
 
-        // 7. Data de início
-        const dInicioRaw = item["Data de início"] || item["Data Início"] || item.dataInicio || "";
-        const dInicioFormatted = formatDateToPT(dInicioRaw);
-
-        // 8. Data de fim
-        const dFimRaw = item["Data de fim"] || item["Data Fim"] || item.dataFim || "";
-        const dFimFormatted = formatDateToPT(dFimRaw);
+        // 7 & 8. Datas
+        const dInicioFormatted = formatDateToPT(item["Data de início"] || item["Data Início"] || item.dataInicio || "");
+        const dFimFormatted = formatDateToPT(item["Data de fim"] || item["Data Fim"] || item.dataFim || "");
 
         // 9. Custos
         const custosLista = parseCustos(item.Custos || item.custos);
@@ -829,7 +971,7 @@
         if (custosLista.length > 0) {
           const totalTarefa = custosLista.reduce((acc, c) => acc + (parseFloat(c.valor) || 0), 0);
           let detalhesHtml = custosLista.map(c => {
-            const faturaLink = c.fatura ? `<a href="${c.fatura}" target="_blank" class="text-blue-600 hover:underline">📄 Fat.</a>` : '';
+            const faturaLink = c.fatura ? `<a href="${c.fatura}" target="_blank" class="text-blue-600 hover:underline no-print">📄 Fat.</a>` : '';
             return `<div class="text-[10px] text-slate-600 flex justify-between gap-1 border-b border-slate-100 py-0.5">
               <span><strong>${c.descricao || 'Item'}:</strong> ${parseFloat(c.valor || 0).toFixed(2)}€ (${c.responsavel})</span>
               ${faturaLink}
@@ -851,7 +993,7 @@
           photosCell = `<span class="text-[10px] text-slate-400 italic" title="${fotoUrl}">Local</span>`;
         }
 
-        // 12. Histórico Auditoria (L, M, N, O com formato dd:mm:aaaa hh:mm)
+        // 12. Histórico Auditoria
         const criador = item["Criado por"] || item.criadoPor || "-";
         const dataCriacao = item["Data de criação"] || item.dataCriacao || "-";
         const editor = item["Editado por"] || item.editadoPor || "";
@@ -870,22 +1012,78 @@
         const deleteBtn = `<button onclick="deleteTask(${realIndex})" class="bg-slate-100 hover:bg-red-50 text-slate-600 hover:text-red-700 border border-slate-200 rounded px-1.5 py-1 text-[11px] font-medium transition" title="Apagar">🗑️</button>`;
 
         row.innerHTML = `
-          <td class="p-2.5 overflow-hidden">${phaseBadge}</td>
-          <td class="p-2.5 font-medium text-slate-800 leading-tight break-words">${tarefaVal}</td>
-          <td class="p-2.5 overflow-hidden">${progressBadge}</td>
-          <td class="p-2.5 leading-tight">${respBadges}</td>
-          <td class="p-2.5 leading-tight">${instBadges}</td>
-          <td class="p-2.5 overflow-hidden">${urgencyBadge}</td>
-          <td class="p-2.5 text-slate-600 font-medium whitespace-nowrap">${dInicioFormatted}</td>
-          <td class="p-2.5 text-slate-600 font-medium whitespace-nowrap">${dFimFormatted}</td>
-          <td class="p-2.5 overflow-hidden">${custosCell}</td>
-          <td class="p-2.5 text-slate-500 text-[11px] leading-tight break-words">${notasVal}</td>
-          <td class="p-2.5 text-center overflow-hidden">${photosCell}</td>
-          <td class="p-2.5 overflow-hidden">${auditCell}</td>
-          <td class="p-2.5 text-center overflow-hidden"><div class="flex items-center justify-center gap-1">${editBtn}${deleteBtn}</div></td>
+          ${dragHandle}
+          <td class="p-2 overflow-hidden">${phaseBadge}</td>
+          <td class="p-2 font-medium text-slate-800 leading-tight break-words">${tarefaVal}</td>
+          <td class="p-2 overflow-hidden">${progressBadge}</td>
+          <td class="p-2 leading-tight">${respBadges}</td>
+          <td class="p-2 leading-tight">${instBadges}</td>
+          <td class="p-2 overflow-hidden">${urgencyBadge}</td>
+          <td class="p-2 text-slate-600 font-medium whitespace-nowrap">${dInicioFormatted}</td>
+          <td class="p-2 text-slate-600 font-medium whitespace-nowrap">${dFimFormatted}</td>
+          <td class="p-2 overflow-hidden">${custosCell}</td>
+          <td class="p-2 text-slate-500 text-[10px] leading-tight break-words">${notasVal}</td>
+          <td class="p-2 text-center overflow-hidden no-print">${photosCell}</td>
+          <td class="p-2 overflow-hidden">${auditCell}</td>
+          <td class="p-2 text-center overflow-hidden no-print"><div class="flex items-center justify-center gap-1">${editBtn}${deleteBtn}</div></td>
         `;
         tbody.appendChild(row);
       });
+    }
+
+    // GUARDAR NOVA ORDEM DAS TAREFAS NO SHEETS
+    async function saveNewTaskOrder() {
+      const rows = document.querySelectorAll("#task-list > tr");
+      const statusLabel = document.getElementById("reorder-status");
+
+      const newOrderedTasks = [];
+
+      rows.forEach(r => {
+        const index = parseInt(r.dataset.taskIndex);
+        if (!isNaN(index) && rawTasksData[index]) {
+          const item = rawTasksData[index];
+          newOrderedTasks.push({
+            fase: item.Fase || item.fase || "Pré-evento",
+            tarefa: item.Tarefa || item.tarefa || "",
+            progresso: item.Progresso || item.progresso || "Pendente",
+            responsabilidade: item.Responsabilidade || item.responsabilidade || "",
+            instituicoes: item["Instituições / Contactos"] || item["Instituições/ empresas a contactar"] || item.instituicoes || "",
+            urgencia: item["Urgência / Importância"] || item["Urgência/ Importância"] || item.urgencia || "Normal",
+            dataInicio: item["Data de início"] || item["Data Início"] || item.dataInicio || "",
+            dataFim: item["Data de fim"] || item["Data Fim"] || item.dataFim || "",
+            custos: item.Custos || item.custos || [],
+            notas: item.Notas || item.notas || "",
+            fotos: item.Fotos || item.fotos || "",
+            criadoPor: item["Criado por"] || item.criadoPor || "",
+            dataCriacao: item["Data de criação"] || item.dataCriacao || "",
+            editadoPor: item["Editado por"] || item.editadoPor || "",
+            dataEdicao: item["Data de edição"] || item.dataEdicao || ""
+          });
+        }
+      });
+
+      if (newOrderedTasks.length === 0) return;
+
+      if (statusLabel) statusLabel.classList.remove("hidden");
+
+      try {
+        await fetch(API_URL, {
+          method: "POST",
+          mode: "no-cors",
+          headers: { "Content-Type": "text/plain;charset=utf-8" },
+          body: JSON.stringify({
+            action: "reorderTasks",
+            projeto: currentProject,
+            tasks: newOrderedTasks
+          })
+        });
+
+        setTimeout(fetchTasks, 1200);
+      } catch (err) {
+        alert("Erro ao guardar a nova ordem.");
+      } finally {
+        if (statusLabel) statusLabel.classList.add("hidden");
+      }
     }
 
     // DESENHAR GRÁFICO DE GANTT
