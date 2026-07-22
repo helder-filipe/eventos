@@ -4,11 +4,14 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Gestão Multi-Projeto - Action Lists</title>
+  
+  <!-- Miniatura do separador da janela (Favicon) -->
+  <link rel="icon" type="image/png" href="projeto.png">
+
   <!-- Tailwind CSS via CDN -->
   <script src="https://cdn.tailwindcss.com"></script>
   <!-- Google Fonts -->
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
-  <link rel="icon" type="image/png" href="projeto.png">
   <style>
     body { font-family: 'Inter', sans-serif; }
     ::-webkit-scrollbar { width: 6px; height: 6px; }
@@ -25,219 +28,290 @@
 </head>
 <body class="bg-slate-50 text-slate-800 min-h-screen flex flex-col">
 
-  <!-- Header Section -->
-  <header class="bg-emerald-800 text-white shadow-md border-b border-emerald-900">
-    <div class="max-w-[98vw] mx-auto px-2 sm:px-4 py-4 flex flex-col lg:flex-row justify-between items-start lg:items-center gap-4">
+  <!-- AUTH SCREEN (LOGIN / REGISTO) -->
+  <div id="auth-screen" class="fixed inset-0 bg-slate-900/80 backdrop-blur-md flex items-center justify-center p-4 z-50">
+    <div class="bg-white rounded-2xl shadow-2xl w-full max-w-md overflow-hidden border border-slate-100">
       
-      <div>
-        <div class="flex items-center gap-2">
-          <span class="text-2xl">📁</span>
-          <h1 class="text-xl sm:text-2xl font-bold tracking-tight">Plataforma de Projetos</h1>
+      <div class="bg-emerald-800 text-white p-6 text-center">
+        <div class="inline-flex p-3 bg-emerald-700/60 rounded-xl mb-2">
+          <span class="text-3xl">📁</span>
         </div>
-        <p class="text-emerald-200 text-xs mt-0.5">Gestão de Ações, Cronograma & Gantt</p>
+        <h2 class="text-xl font-bold">Plataforma de Projetos</h2>
+        <p class="text-emerald-200 text-xs mt-1">Inicia sessão para aceder às listas de ações</p>
       </div>
 
-      <div class="flex flex-col sm:flex-row items-stretch sm:items-center gap-3 w-full lg:w-auto">
-        <div class="flex items-center gap-2 bg-emerald-900/60 p-1.5 rounded-lg border border-emerald-700/50">
-          <label for="project-select" class="text-xs font-semibold text-emerald-200 uppercase px-1 whitespace-nowrap">Projeto:</label>
-          <select id="project-select" onchange="changeProject(this.value)" class="bg-white text-slate-800 text-sm font-semibold rounded-md px-3 py-1.5 focus:outline-none focus:ring-2 focus:ring-emerald-400 cursor-pointer w-full sm:w-auto">
-            <option value="">A carregar...</option>
-          </select>
-          
-          <button onclick="openProjectModal()" title="Criar novo projeto do zero" class="bg-emerald-700 hover:bg-emerald-600 text-white p-1.5 rounded-md text-xs font-semibold transition px-2.5 whitespace-nowrap">
-            + Novo
+      <div class="p-6">
+        <!-- FORMULARIO LOGIN -->
+        <form id="login-form" onsubmit="handleLogin(event)" class="space-y-4">
+          <div>
+            <label class="block text-xs font-semibold text-slate-600 uppercase mb-1">Email</label>
+            <input type="email" id="login-email" required placeholder="o.teu.email@empresa.pt" class="w-full border border-slate-300 rounded-lg p-2.5 text-sm focus:ring-2 focus:ring-emerald-500 outline-none">
+          </div>
+          <div>
+            <label class="block text-xs font-semibold text-slate-600 uppercase mb-1">Palavra-passe</label>
+            <input type="password" id="login-password" required placeholder="••••••••" class="w-full border border-slate-300 rounded-lg p-2.5 text-sm focus:ring-2 focus:ring-emerald-500 outline-none">
+          </div>
+
+          <button type="submit" id="login-btn" class="w-full bg-emerald-700 hover:bg-emerald-600 text-white font-semibold py-2.5 rounded-lg text-sm transition shadow-sm">
+            Entrar
           </button>
 
-          <button onclick="openDuplicateModal()" title="Replicar a estrutura deste projeto" class="bg-amber-600 hover:bg-amber-500 text-white p-1.5 rounded-md text-xs font-semibold transition px-2.5 whitespace-nowrap">
-            📋 Replicar Projeto
+          <p class="text-center text-xs text-slate-500 pt-2">
+            Ainda não tens conta? <button type="button" onclick="toggleAuthMode('register')" class="text-emerald-700 font-bold hover:underline">Registar agora</button>
+          </p>
+        </form>
+
+        <!-- FORMULARIO REGISTO -->
+        <form id="register-form" onsubmit="handleRegister(event)" class="space-y-4 hidden">
+          <div>
+            <label class="block text-xs font-semibold text-slate-600 uppercase mb-1">Nome Completo</label>
+            <input type="text" id="reg-nome" required placeholder="Ex: Hélder Filipe" class="w-full border border-slate-300 rounded-lg p-2.5 text-sm focus:ring-2 focus:ring-emerald-500 outline-none">
+          </div>
+          <div>
+            <label class="block text-xs font-semibold text-slate-600 uppercase mb-1">Email</label>
+            <input type="email" id="reg-email" required placeholder="o.teu.email@empresa.pt" class="w-full border border-slate-300 rounded-lg p-2.5 text-sm focus:ring-2 focus:ring-emerald-500 outline-none">
+          </div>
+          <div>
+            <label class="block text-xs font-semibold text-slate-600 uppercase mb-1">Palavra-passe</label>
+            <input type="password" id="reg-password" required placeholder="••••••••" class="w-full border border-slate-300 rounded-lg p-2.5 text-sm focus:ring-2 focus:ring-emerald-500 outline-none">
+          </div>
+
+          <button type="submit" id="register-btn" class="w-full bg-emerald-700 hover:bg-emerald-600 text-white font-semibold py-2.5 rounded-lg text-sm transition shadow-sm">
+            Criar Conta
           </button>
-        </div>
 
-        <button onclick="openModalForNew()" class="bg-emerald-600 hover:bg-emerald-500 text-white font-medium px-4 py-2 rounded-lg shadow-sm transition-all flex items-center justify-center gap-2 text-sm active:scale-95">
-          <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4" />
-          </svg>
-          Nova Tarefa
-        </button>
+          <p class="text-center text-xs text-slate-500 pt-2">
+            Já tens conta? <button type="button" onclick="toggleAuthMode('login')" class="text-emerald-700 font-bold hover:underline">Iniciar Sessão</button>
+          </p>
+        </form>
       </div>
 
     </div>
-  </header>
+  </div>
 
-  <!-- Main Container -->
-  <main class="max-w-[98vw] mx-auto px-2 sm:px-4 py-6 flex-grow w-full">
-
-    <!-- Dashboard KPI Cards -->
-    <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 mb-4">
-      <div id="kpi-card-all" onclick="setKpiFilter('todos')" class="bg-white p-4 rounded-xl shadow-sm border-2 border-emerald-500 hover:border-emerald-600 cursor-pointer transition flex items-center justify-between group">
+  <!-- MAIN APPLICATION CONTENT -->
+  <div id="app-screen" class="hidden min-h-screen flex flex-col">
+    
+    <!-- Header Section -->
+    <header class="bg-emerald-800 text-white shadow-md border-b border-emerald-900">
+      <div class="max-w-[98vw] mx-auto px-2 sm:px-4 py-4 flex flex-col lg:flex-row justify-between items-start lg:items-center gap-4">
+        
         <div>
-          <span class="text-xs font-semibold uppercase tracking-wider text-slate-400 group-hover:text-slate-600">Total de Tarefas</span>
-          <p id="kpi-total" class="text-2xl font-bold text-slate-800 mt-1">0</p>
-        </div>
-        <div class="w-10 h-10 rounded-lg bg-slate-100 flex items-center justify-center text-slate-500">📋</div>
-      </div>
-
-      <div id="kpi-card-completed" onclick="setKpiFilter('Concluído')" class="bg-white p-4 rounded-xl shadow-sm border-2 border-transparent hover:border-emerald-400 cursor-pointer transition flex items-center justify-between group">
-        <div>
-          <span class="text-xs font-semibold uppercase tracking-wider text-emerald-600">Concluídas</span>
-          <p id="kpi-completed" class="text-2xl font-bold text-emerald-600 mt-1">0</p>
-        </div>
-        <div class="w-10 h-10 rounded-lg bg-emerald-50 flex items-center justify-center text-emerald-600">✅</div>
-      </div>
-
-      <div id="kpi-card-pending" onclick="setKpiFilter('pendentes')" class="bg-white p-4 rounded-xl shadow-sm border-2 border-transparent hover:border-amber-400 cursor-pointer transition flex items-center justify-between group">
-        <div>
-          <span class="text-xs font-semibold uppercase tracking-wider text-amber-600">Pendentes / Em Curso</span>
-          <p id="kpi-pending" class="text-2xl font-bold text-amber-600 mt-1">0</p>
-        </div>
-        <div class="w-10 h-10 rounded-lg bg-amber-50 flex items-center justify-center text-amber-600">⏳</div>
-      </div>
-
-      <div class="bg-white p-4 rounded-xl shadow-sm border border-slate-200 flex items-center justify-between">
-        <div>
-          <span class="text-xs font-semibold uppercase tracking-wider text-blue-600">Custo Total Projeto</span>
-          <p id="kpi-total-cost" class="text-xl font-bold text-blue-800 mt-1">0,00 €</p>
-          <span id="kpi-cost-breakdown" class="text-[10px] text-slate-500 mt-0.5 block">Infralobo: 0 € | Parceiros: 0 €</span>
-        </div>
-        <div class="w-10 h-10 rounded-lg bg-blue-50 flex items-center justify-center text-blue-600">💶</div>
-      </div>
-    </div>
-
-    <!-- CENTRO DE APRENDIZAGEM -->
-    <div class="bg-white rounded-xl shadow-sm border border-slate-200/80 p-4 mb-4">
-      <div class="flex justify-between items-center cursor-pointer" onclick="toggleLearningCenter()">
-        <div class="flex items-center gap-2">
-          <span class="text-lg">💡</span>
-          <h3 class="font-bold text-slate-700 text-sm">Centro de Aprendizagem & Dicas de Melhoria do Projeto</h3>
-        </div>
-        <button id="learning-toggle-icon" class="text-slate-400 hover:text-slate-600 font-bold text-xs">▼ Expandir</button>
-      </div>
-
-      <div id="learning-center-content" class="hidden mt-3 pt-3 border-t border-slate-100 space-y-2">
-        <textarea id="project-learning-notes" rows="2" placeholder="Notas sobre imprevistos, fornecedores, logística a melhorar na próxima edição..." class="w-full border border-slate-300 rounded-lg p-2.5 text-xs focus:ring-2 focus:ring-emerald-500 outline-none resize-y"></textarea>
-        <div class="flex justify-end">
-          <button onclick="saveProjectNotes()" id="save-notes-btn" class="bg-slate-800 hover:bg-slate-700 text-white text-xs font-semibold px-3 py-1.5 rounded-lg transition">
-            💾 Guardar Aprendizagens
-          </button>
-        </div>
-      </div>
-    </div>
-
-    <!-- PAINEL DO GRÁFICO DE GANTT (COM EIXO DE MESES) -->
-    <div class="bg-white rounded-xl shadow-sm border border-slate-200/80 p-4 mb-4">
-      <div class="flex justify-between items-center cursor-pointer" onclick="toggleGantt()">
-        <div class="flex items-center gap-2">
-          <span class="text-lg">📊</span>
-          <h3 class="font-bold text-slate-700 text-sm">Gráfico de Gantt do Cronograma</h3>
-          <span class="text-[10px] bg-indigo-100 text-indigo-800 font-semibold px-2 py-0.5 rounded-full">Visualização Temporal por Meses</span>
-        </div>
-        <button id="gantt-toggle-icon" class="text-slate-400 hover:text-slate-600 font-bold text-xs">▼ Expandir</button>
-      </div>
-
-      <div id="gantt-content" class="hidden mt-4 pt-3 border-t border-slate-100">
-        <div id="gantt-chart-container" class="overflow-x-auto min-h-[150px]">
-          <!-- O gráfico de Gantt com eixo de meses é gerado aqui via JS -->
-        </div>
-      </div>
-    </div>
-
-    <!-- Data Table Card + Filtros -->
-    <div class="bg-white rounded-xl shadow-sm border border-slate-200/80 overflow-hidden">
-      
-      <!-- Toolbar de Filtros -->
-      <div class="p-3 border-b border-slate-200 bg-slate-50/80 space-y-3">
-        <div class="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-3">
           <div class="flex items-center gap-2">
-            <h2 id="current-project-title" class="font-semibold text-slate-700 text-sm sm:text-base">Lista de Ações</h2>
-            <span id="task-count-badge" class="bg-slate-200 text-slate-700 text-xs px-2 py-0.5 rounded-full font-medium">0</span>
+            <span class="text-2xl">📁</span>
+            <h1 class="text-xl sm:text-2xl font-bold tracking-tight">Plataforma de Projetos</h1>
           </div>
-
-          <div class="flex items-center gap-2 w-full sm:w-auto justify-end">
-            <input type="text" id="search-input" onkeyup="applyAllFilters()" placeholder="Pesquisar por texto..." class="border border-slate-300 rounded-lg text-xs px-3 py-1.5 w-48 sm:w-64 focus:outline-none focus:ring-2 focus:ring-emerald-500">
-            <button onclick="fetchTasks()" class="text-slate-600 hover:text-emerald-700 bg-white border border-slate-200 hover:border-emerald-300 text-xs font-medium px-3 py-1.5 rounded-lg shadow-sm transition flex items-center gap-1.5 whitespace-nowrap">
-              <svg id="refresh-icon" xmlns="http://www.w3.org/2000/svg" class="h-3.5 w-3.5 text-slate-500" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" />
-              </svg>
-              Atualizar
-            </button>
-          </div>
+          <p class="text-emerald-200 text-xs mt-0.5">Gestão de Ações, Cronograma & Gantt</p>
         </div>
 
-        <!-- Filtros Dropdowns -->
-        <div class="grid grid-cols-2 sm:grid-cols-4 lg:grid-cols-5 gap-2 pt-2 border-t border-slate-200/60 text-xs">
-          <div>
-            <label class="block text-[10px] font-bold text-slate-500 uppercase mb-0.5">Fase:</label>
-            <select id="filter-fase" onchange="applyAllFilters()" class="w-full border border-slate-300 rounded p-1.5 bg-white text-slate-700 font-medium focus:ring-1 focus:ring-emerald-500 outline-none">
-              <option value="">Todas as Fases</option>
-              <option value="Pré-evento">Pré-evento</option>
-              <option value="Evento">Evento</option>
-              <option value="Pós-evento">Pós-evento</option>
-            </select>
+        <div class="flex flex-col sm:flex-row items-stretch sm:items-center gap-3 w-full lg:w-auto">
+          <!-- User Badge & Logout -->
+          <div class="flex items-center justify-between sm:justify-start gap-2 bg-emerald-900/80 px-3 py-1.5 rounded-lg border border-emerald-700/60 text-xs">
+            <span class="text-emerald-100 flex items-center gap-1">👤 <strong id="logged-user-name">Utilizador</strong></span>
+            <button onclick="handleLogout()" class="text-amber-300 hover:text-white font-bold ml-2 underline">Sair</button>
           </div>
 
-          <div>
-            <label class="block text-[10px] font-bold text-slate-500 uppercase mb-0.5">Responsabilidade:</label>
-            <select id="filter-resp" onchange="applyAllFilters()" class="w-full border border-slate-300 rounded p-1.5 bg-white text-slate-700 font-medium focus:ring-1 focus:ring-emerald-500 outline-none">
-              <option value="">Todas</option>
+          <div class="flex items-center gap-2 bg-emerald-900/60 p-1.5 rounded-lg border border-emerald-700/50">
+            <label for="project-select" class="text-xs font-semibold text-emerald-200 uppercase px-1 whitespace-nowrap">Projeto:</label>
+            <select id="project-select" onchange="changeProject(this.value)" class="bg-white text-slate-800 text-sm font-semibold rounded-md px-3 py-1.5 focus:outline-none focus:ring-2 focus:ring-emerald-400 cursor-pointer w-full sm:w-auto">
+              <option value="">A carregar...</option>
             </select>
+            
+            <button onclick="openProjectModal()" title="Criar novo projeto do zero" class="bg-emerald-700 hover:bg-emerald-600 text-white p-1.5 rounded-md text-xs font-semibold transition px-2.5 whitespace-nowrap">
+              + Novo
+            </button>
+
+            <button onclick="openDuplicateModal()" title="Replicar a estrutura deste projeto" class="bg-amber-600 hover:bg-amber-500 text-white p-1.5 rounded-md text-xs font-semibold transition px-2.5 whitespace-nowrap">
+              📋 Replicar Projeto
+            </button>
           </div>
 
-          <div>
-            <label class="block text-[10px] font-bold text-slate-500 uppercase mb-0.5">Instituições / Contactos:</label>
-            <select id="filter-inst" onchange="applyAllFilters()" class="w-full border border-slate-300 rounded p-1.5 bg-white text-slate-700 font-medium focus:ring-1 focus:ring-emerald-500 outline-none">
-              <option value="">Todas</option>
-            </select>
-          </div>
+          <button onclick="openModalForNew()" class="bg-emerald-600 hover:bg-emerald-500 text-white font-medium px-4 py-2 rounded-lg shadow-sm transition-all flex items-center justify-center gap-2 text-sm active:scale-95">
+            <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4" />
+            </svg>
+            Nova Tarefa
+          </button>
+        </div>
 
-          <div>
-            <label class="block text-[10px] font-bold text-slate-500 uppercase mb-0.5">Urgência / Importância:</label>
-            <select id="filter-urgencia" onchange="applyAllFilters()" class="w-full border border-slate-300 rounded p-1.5 bg-white text-slate-700 font-medium focus:ring-1 focus:ring-emerald-500 outline-none">
-              <option value="">Todas</option>
-              <option value="Urgente">Urgente / Importante</option>
-              <option value="Importante">Importante</option>
-              <option value="Normal">Normal</option>
-            </select>
-          </div>
+      </div>
+    </header>
 
-          <div class="col-span-2 sm:col-span-4 lg:col-span-1 flex items-end">
-            <button onclick="resetFilters()" class="w-full bg-slate-200 hover:bg-slate-300 text-slate-700 font-medium p-1.5 rounded transition text-xs flex items-center justify-center gap-1">
-              🧹 Limpar Filtros
+    <!-- Main Container -->
+    <main class="max-w-[98vw] mx-auto px-2 sm:px-4 py-6 flex-grow w-full">
+
+      <!-- Dashboard KPI Cards -->
+      <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 mb-4">
+        <div id="kpi-card-all" onclick="setKpiFilter('todos')" class="bg-white p-4 rounded-xl shadow-sm border-2 border-emerald-500 hover:border-emerald-600 cursor-pointer transition flex items-center justify-between group">
+          <div>
+            <span class="text-xs font-semibold uppercase tracking-wider text-slate-400 group-hover:text-slate-600">Total de Tarefas</span>
+            <p id="kpi-total" class="text-2xl font-bold text-slate-800 mt-1">0</p>
+          </div>
+          <div class="w-10 h-10 rounded-lg bg-slate-100 flex items-center justify-center text-slate-500">📋</div>
+        </div>
+
+        <div id="kpi-card-completed" onclick="setKpiFilter('Concluído')" class="bg-white p-4 rounded-xl shadow-sm border-2 border-transparent hover:border-emerald-400 cursor-pointer transition flex items-center justify-between group">
+          <div>
+            <span class="text-xs font-semibold uppercase tracking-wider text-emerald-600">Concluídas</span>
+            <p id="kpi-completed" class="text-2xl font-bold text-emerald-600 mt-1">0</p>
+          </div>
+          <div class="w-10 h-10 rounded-lg bg-emerald-50 flex items-center justify-center text-emerald-600">✅</div>
+        </div>
+
+        <div id="kpi-card-pending" onclick="setKpiFilter('pendentes')" class="bg-white p-4 rounded-xl shadow-sm border-2 border-transparent hover:border-amber-400 cursor-pointer transition flex items-center justify-between group">
+          <div>
+            <span class="text-xs font-semibold uppercase tracking-wider text-amber-600">Em Curso / Pendentes</span>
+            <p id="kpi-pending" class="text-2xl font-bold text-amber-600 mt-1">0</p>
+          </div>
+          <div class="w-10 h-10 rounded-lg bg-amber-50 flex items-center justify-center text-amber-600">⏳</div>
+        </div>
+
+        <div class="bg-white p-4 rounded-xl shadow-sm border border-slate-200 flex items-center justify-between">
+          <div>
+            <span class="text-xs font-semibold uppercase tracking-wider text-blue-600">Custo Total Projeto</span>
+            <p id="kpi-total-cost" class="text-xl font-bold text-blue-800 mt-1">0,00 €</p>
+            <span id="kpi-cost-breakdown" class="text-[10px] text-slate-500 mt-0.5 block">Infralobo: 0 € | Parceiros: 0 €</span>
+          </div>
+          <div class="w-10 h-10 rounded-lg bg-blue-50 flex items-center justify-center text-blue-600">💶</div>
+        </div>
+      </div>
+
+      <!-- CENTRO DE APRENDIZAGEM -->
+      <div class="bg-white rounded-xl shadow-sm border border-slate-200/80 p-4 mb-4">
+        <div class="flex justify-between items-center cursor-pointer" onclick="toggleLearningCenter()">
+          <div class="flex items-center gap-2">
+            <span class="text-lg">💡</span>
+            <h3 class="font-bold text-slate-700 text-sm">Centro de Aprendizagem & Dicas de Melhoria do Projeto</h3>
+          </div>
+          <button id="learning-toggle-icon" class="text-slate-400 hover:text-slate-600 font-bold text-xs">▼ Expandir</button>
+        </div>
+
+        <div id="learning-center-content" class="hidden mt-3 pt-3 border-t border-slate-100 space-y-2">
+          <textarea id="project-learning-notes" rows="2" placeholder="Notas sobre imprevistos, fornecedores, logística a melhorar na próxima edição..." class="w-full border border-slate-300 rounded-lg p-2.5 text-xs focus:ring-2 focus:ring-emerald-500 outline-none resize-y"></textarea>
+          <div class="flex justify-end">
+            <button onclick="saveProjectNotes()" id="save-notes-btn" class="bg-slate-800 hover:bg-slate-700 text-white text-xs font-semibold px-3 py-1.5 rounded-lg transition">
+              💾 Guardar Aprendizagens
             </button>
           </div>
         </div>
       </div>
 
-      <!-- Table View -->
-      <div class="w-full overflow-x-auto">
-        <table id="resizable-table" class="w-full text-left border-collapse table-fixed">
-          <thead>
-            <tr class="bg-slate-100/80 text-slate-600 text-[11px] font-semibold uppercase tracking-wider border-b border-slate-200">
-              <th style="width: 100px;" class="py-2.5 px-2">Fase</th>
-              <th style="width: 220px;" class="py-2.5 px-2">Tarefa</th>
-              <th style="width: 100px;" class="py-2.5 px-2">Progresso</th>
-              <th style="width: 130px;" class="py-2.5 px-2">Responsabilidade</th>
-              <th style="width: 160px;" class="py-2.5 px-2">Instituições / Contactos</th>
-              <th style="width: 110px;" class="py-2.5 px-2">Urgência / Importância</th>
-              <th style="width: 110px;" class="py-2.5 px-2">Data de início</th>
-              <th style="width: 110px;" class="py-2.5 px-2">Data de fim</th>
-              <th style="width: 160px;" class="py-2.5 px-2">Custos</th>
-              <th style="width: 180px;" class="py-2.5 px-2">Notas</th>
-              <th style="width: 70px;" class="py-2.5 px-2 text-center">Fotos</th>
-              <th style="width: 80px;" class="py-2.5 px-2 text-center">Ações</th>
-            </tr>
-          </thead>
-          <tbody id="task-list" class="divide-y divide-slate-100 text-xs">
-            <tr>
-              <td colspan="12" class="text-center p-12 text-slate-400">
-                <div class="inline-block animate-spin rounded-full h-8 w-8 border-4 border-slate-200 border-t-emerald-600 mb-2"></div>
-                <p>A carregar dados...</p>
-              </td>
-            </tr>
-          </tbody>
-        </table>
+      <!-- PAINEL DO GRÁFICO DE GANTT -->
+      <div class="bg-white rounded-xl shadow-sm border border-slate-200/80 p-4 mb-4">
+        <div class="flex justify-between items-center cursor-pointer" onclick="toggleGantt()">
+          <div class="flex items-center gap-2">
+            <span class="text-lg">📊</span>
+            <h3 class="font-bold text-slate-700 text-sm">Gráfico de Gantt do Cronograma</h3>
+            <span class="text-[10px] bg-indigo-100 text-indigo-800 font-semibold px-2 py-0.5 rounded-full">Visualização Temporal por Meses</span>
+          </div>
+          <button id="gantt-toggle-icon" class="text-slate-400 hover:text-slate-600 font-bold text-xs">▼ Expandir</button>
+        </div>
+
+        <div id="gantt-content" class="hidden mt-4 pt-3 border-t border-slate-100">
+          <div id="gantt-chart-container" class="overflow-x-auto min-h-[150px]"></div>
+        </div>
       </div>
-    </div>
-  </main>
+
+      <!-- Data Table Card + Filtros -->
+      <div class="bg-white rounded-xl shadow-sm border border-slate-200/80 overflow-hidden">
+        
+        <!-- Toolbar de Filtros -->
+        <div class="p-3 border-b border-slate-200 bg-slate-50/80 space-y-3">
+          <div class="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-3">
+            <div class="flex items-center gap-2">
+              <h2 id="current-project-title" class="font-semibold text-slate-700 text-sm sm:text-base">Lista de Ações</h2>
+              <span id="task-count-badge" class="bg-slate-200 text-slate-700 text-xs px-2 py-0.5 rounded-full font-medium">0</span>
+            </div>
+
+            <div class="flex items-center gap-2 w-full sm:w-auto justify-end">
+              <input type="text" id="search-input" onkeyup="applyAllFilters()" placeholder="Pesquisar por texto..." class="border border-slate-300 rounded-lg text-xs px-3 py-1.5 w-48 sm:w-64 focus:outline-none focus:ring-2 focus:ring-emerald-500">
+              <button onclick="fetchTasks()" class="text-slate-600 hover:text-emerald-700 bg-white border border-slate-200 hover:border-emerald-300 text-xs font-medium px-3 py-1.5 rounded-lg shadow-sm transition flex items-center gap-1.5 whitespace-nowrap">
+                <svg id="refresh-icon" xmlns="http://www.w3.org/2000/svg" class="h-3.5 w-3.5 text-slate-500" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" />
+                </svg>
+                Atualizar
+              </button>
+            </div>
+          </div>
+
+          <!-- Filtros Dropdowns -->
+          <div class="grid grid-cols-2 sm:grid-cols-4 lg:grid-cols-5 gap-2 pt-2 border-t border-slate-200/60 text-xs">
+            <div>
+              <label class="block text-[10px] font-bold text-slate-500 uppercase mb-0.5">Fase:</label>
+              <select id="filter-fase" onchange="applyAllFilters()" class="w-full border border-slate-300 rounded p-1.5 bg-white text-slate-700 font-medium focus:ring-1 focus:ring-emerald-500 outline-none">
+                <option value="">Todas as Fases</option>
+                <option value="Pré-evento">Pré-evento</option>
+                <option value="Evento">Evento</option>
+                <option value="Pós-evento">Pós-evento</option>
+              </select>
+            </div>
+
+            <div>
+              <label class="block text-[10px] font-bold text-slate-500 uppercase mb-0.5">Responsabilidade:</label>
+              <select id="filter-resp" onchange="applyAllFilters()" class="w-full border border-slate-300 rounded p-1.5 bg-white text-slate-700 font-medium focus:ring-1 focus:ring-emerald-500 outline-none">
+                <option value="">Todas</option>
+              </select>
+            </div>
+
+            <div>
+              <label class="block text-[10px] font-bold text-slate-500 uppercase mb-0.5">Instituições / Contactos:</label>
+              <select id="filter-inst" onchange="applyAllFilters()" class="w-full border border-slate-300 rounded p-1.5 bg-white text-slate-700 font-medium focus:ring-1 focus:ring-emerald-500 outline-none">
+                <option value="">Todas</option>
+              </select>
+            </div>
+
+            <div>
+              <label class="block text-[10px] font-bold text-slate-500 uppercase mb-0.5">Urgência / Importância:</label>
+              <select id="filter-urgencia" onchange="applyAllFilters()" class="w-full border border-slate-300 rounded p-1.5 bg-white text-slate-700 font-medium focus:ring-1 focus:ring-emerald-500 outline-none">
+                <option value="">Todas</option>
+                <option value="Urgente">Urgente / Importante</option>
+                <option value="Importante">Importante</option>
+                <option value="Normal">Normal</option>
+              </select>
+            </div>
+
+            <div class="col-span-2 sm:col-span-4 lg:col-span-1 flex items-end">
+              <button onclick="resetFilters()" class="w-full bg-slate-200 hover:bg-slate-300 text-slate-700 font-medium p-1.5 rounded transition text-xs flex items-center justify-center gap-1">
+                🧹 Limpar Filtros
+              </button>
+            </div>
+          </div>
+        </div>
+
+        <!-- Table View -->
+        <div class="w-full overflow-x-auto">
+          <table id="resizable-table" class="w-full text-left border-collapse table-fixed">
+            <thead>
+              <tr class="bg-slate-100/80 text-slate-600 text-[11px] font-semibold uppercase tracking-wider border-b border-slate-200">
+                <th style="width: 100px;" class="py-2.5 px-2">Fase</th>
+                <th style="width: 200px;" class="py-2.5 px-2">Tarefa</th>
+                <th style="width: 120px;" class="py-2.5 px-2">Progresso</th>
+                <th style="width: 140px;" class="py-2.5 px-2">Responsabilidade</th>
+                <th style="width: 160px;" class="py-2.5 px-2">Instituições / Contactos</th>
+                <th style="width: 110px;" class="py-2.5 px-2">Urgência</th>
+                <th style="width: 100px;" class="py-2.5 px-2">Data de início</th>
+                <th style="width: 100px;" class="py-2.5 px-2">Data de fim</th>
+                <th style="width: 140px;" class="py-2.5 px-2">Custos</th>
+                <th style="width: 160px;" class="py-2.5 px-2">Notas</th>
+                <th style="width: 60px;" class="py-2.5 px-2 text-center">Fotos</th>
+                <th style="width: 170px;" class="py-2.5 px-2">Histórico (Auditoria)</th>
+                <th style="width: 90px;" class="py-2.5 px-2 text-center">Ações</th>
+              </tr>
+            </thead>
+            <tbody id="task-list" class="divide-y divide-slate-100 text-xs">
+              <tr>
+                <td colspan="13" class="text-center p-12 text-slate-400">
+                  <div class="inline-block animate-spin rounded-full h-8 w-8 border-4 border-slate-200 border-t-emerald-600 mb-2"></div>
+                  <p>A carregar dados...</p>
+                </td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
+    </main>
+
+  </div>
 
   <!-- MODAL 1: Criar Novo Projeto -->
   <div id="project-modal" class="fixed inset-0 bg-slate-900/50 backdrop-blur-sm hidden flex items-center justify-center p-4 z-50">
@@ -311,9 +385,11 @@
           <div>
             <label class="block text-xs font-semibold text-slate-600 uppercase tracking-wider mb-1">Progresso</label>
             <select id="input-progresso" class="w-full border border-slate-300 rounded-lg p-2.5 text-sm focus:ring-2 focus:ring-emerald-500 outline-none bg-white">
+              <option value="Pendente" selected>Pendente</option>
               <option value="Em Curso">Em Curso</option>
               <option value="Concluído">Concluído</option>
-              <option value="Pendente" selected>Pendente</option>
+              <option value="A aguardar por terceiros">A aguardar por terceiros</option>
+              <option value="Cancelado">Cancelado</option>
             </select>
           </div>
         </div>
@@ -326,12 +402,14 @@
         <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
           <div>
             <label class="block text-xs font-semibold text-slate-600 uppercase tracking-wider mb-1">Responsabilidade Geral</label>
-            <input type="text" id="input-responsabilidade" placeholder="Ex: Infralobo / Parceiro" class="w-full border border-slate-300 rounded-lg p-2.5 text-sm focus:ring-2 focus:ring-emerald-500 outline-none">
+            <input type="text" id="input-responsabilidade" placeholder="Ex: Infralobo; Capitania (separar por ;)" class="w-full border border-slate-300 rounded-lg p-2.5 text-sm focus:ring-2 focus:ring-emerald-500 outline-none">
+            <span class="text-[10px] text-slate-400">Podes indicar mais do que uma entidade separando por ponto e vírgula (;)</span>
           </div>
 
           <div>
             <label class="block text-xs font-semibold text-slate-600 uppercase tracking-wider mb-1">Instituições / Contactos</label>
-            <input type="text" id="input-instituicoes" placeholder="Ex: Capitania, Escolas" class="w-full border border-slate-300 rounded-lg p-2.5 text-sm focus:ring-2 focus:ring-emerald-500 outline-none">
+            <input type="text" id="input-instituicoes" placeholder="Ex: Capitania; Escolas; Dunas Douradas" class="w-full border border-slate-300 rounded-lg p-2.5 text-sm focus:ring-2 focus:ring-emerald-500 outline-none">
+            <span class="text-[10px] text-slate-400">Podes indicar mais do que uma instituição separando por ponto e vírgula (;)</span>
           </div>
         </div>
 
@@ -388,11 +466,106 @@
   <script>
     const API_URL = "https://script.google.com/macros/s/AKfycbw_Unni-QHjpMRT2gwPR8Q4MzmigHZ8gvrLS_jUU-AgAhU0jrsujQ1odl8e_eLV59T55Q/exec";
 
+    let currentUser = null;
     let currentProject = "";
     let rawTasksData = [];
     let selectedKpiFilter = "todos";
 
-    // Função Auxiliar para Formatar Data YYYY-MM-DD em DD-MM-AAAA
+    // INICIALIZAÇÃO DA SESSÃO
+    window.addEventListener("DOMContentLoaded", () => {
+      const savedUser = localStorage.getItem("app_user");
+      if (savedUser) {
+        currentUser = JSON.parse(savedUser);
+        showAppScreen();
+      }
+    });
+
+    function toggleAuthMode(mode) {
+      if (mode === 'register') {
+        document.getElementById("login-form").classList.add("hidden");
+        document.getElementById("register-form").classList.remove("hidden");
+      } else {
+        document.getElementById("register-form").classList.add("hidden");
+        document.getElementById("login-form").classList.remove("hidden");
+      }
+    }
+
+    async function handleLogin(e) {
+      e.preventDefault();
+      const btn = document.getElementById("login-btn");
+      btn.disabled = true; btn.innerText = "A verificar...";
+
+      const email = document.getElementById("login-email").value;
+      const pass = document.getElementById("login-password").value;
+
+      try {
+        const response = await fetch(API_URL, {
+          method: "POST",
+          body: JSON.stringify({ action: "login", email: email, password: pass })
+        });
+        const res = await response.json();
+
+        if (res.result === "success") {
+          currentUser = res.user;
+          localStorage.setItem("app_user", JSON.stringify(currentUser));
+          showAppScreen();
+        } else {
+          alert(res.message || "Erro ao efetuar login.");
+        }
+      } catch (err) {
+        alert("Erro de ligação ao servidor.");
+      } finally {
+        btn.disabled = false; btn.innerText = "Entrar";
+      }
+    }
+
+    async function handleRegister(e) {
+      e.preventDefault();
+      const btn = document.getElementById("register-btn");
+      btn.disabled = true; btn.innerText = "A criar conta...";
+
+      const nome = document.getElementById("reg-nome").value;
+      const email = document.getElementById("reg-email").value;
+      const pass = document.getElementById("reg-password").value;
+
+      try {
+        const response = await fetch(API_URL, {
+          method: "POST",
+          body: JSON.stringify({ action: "register", nome: nome, email: email, password: pass })
+        });
+        const res = await response.json();
+
+        if (res.result === "success") {
+          currentUser = res.user;
+          localStorage.setItem("app_user", JSON.stringify(currentUser));
+          showAppScreen();
+        } else {
+          alert(res.message || "Erro ao registar.");
+        }
+      } catch (err) {
+        alert("Erro de ligação ao servidor.");
+      } finally {
+        btn.disabled = false; btn.innerText = "Criar Conta";
+      }
+    }
+
+    function handleLogout() {
+      localStorage.removeItem("app_user");
+      currentUser = null;
+      document.getElementById("app-screen").classList.add("hidden");
+      document.getElementById("auth-screen").classList.remove("hidden");
+    }
+
+    function showAppScreen() {
+      document.getElementById("auth-screen").classList.add("hidden");
+      document.getElementById("app-screen").classList.remove("hidden");
+      document.getElementById("logged-user-name").innerText = currentUser.nome || currentUser.email;
+
+      loadProjects().then(() => {
+        makeTableResizable("resizable-table");
+      });
+    }
+
     function formatDateToPT(dateStr) {
       if (!dateStr || typeof dateStr !== "string") return "-";
       const cleanStr = dateStr.trim();
@@ -410,6 +583,18 @@
         return `${parts[2]}-${parts[1]}-${parts[0]}`;
       }
       return cleanStr;
+    }
+
+    // Auxiliar para criar Badges visuais quando existem múltiplos itens separados por ;
+    function renderMultiBadges(textValue, badgeBgClass = "bg-slate-100 text-slate-700 border-slate-200") {
+      if (!textValue || textValue === "-") return '<span class="text-slate-300">-</span>';
+      
+      const items = String(textValue).split(";").map(s => s.trim()).filter(s => s.length > 0);
+      if (items.length === 0) return '<span class="text-slate-300">-</span>';
+
+      return `<div class="flex flex-wrap gap-1">` + 
+        items.map(item => `<span class="px-1.5 py-0.5 rounded text-[10px] font-medium border ${badgeBgClass}">${item}</span>`).join('') +
+        `</div>`;
     }
 
     async function loadProjects(selectProjectName = null) {
@@ -462,7 +647,7 @@
 
       tbody.innerHTML = `
         <tr>
-          <td colspan="12" class="text-center p-12 text-slate-400">
+          <td colspan="13" class="text-center p-12 text-slate-400">
             <div class="inline-block animate-spin rounded-full h-7 w-7 border-4 border-slate-200 border-t-emerald-600 mb-2"></div>
             <p>A carregar tarefas de <strong>${currentProject || "projeto"}</strong>...</p>
           </td>
@@ -483,7 +668,7 @@
         renderGanttChart(rawTasksData);
 
       } catch (error) {
-        tbody.innerHTML = `<tr><td colspan="12" class="text-center p-8 text-red-500 bg-red-50/50">⚠️ Erro ao carregar tarefas.</td></tr>`;
+        tbody.innerHTML = `<tr><td colspan="13" class="text-center p-8 text-red-500 bg-red-50/50">⚠️ Erro ao carregar tarefas.</td></tr>`;
       } finally {
         if (refreshIcon) refreshIcon.classList.remove("animate-spin");
       }
@@ -496,10 +681,15 @@
       const insts = new Set();
 
       data.forEach(item => {
-        const r = item.Responsabilidade || item.responsabilidade;
-        if (r && r.trim()) resps.add(r.trim());
-        const i = item["Instituições / Contactos"] || item["Instituições/ empresas a contactar"] || item.instituicoes;
-        if (i && i.trim()) insts.add(i.trim());
+        const rRaw = item.Responsabilidade || item.responsabilidade;
+        if (rRaw) {
+          String(rRaw).split(";").forEach(s => { if (s.trim()) resps.add(s.trim()); });
+        }
+        
+        const iRaw = item["Instituições / Contactos"] || item["Instituições/ empresas a contactar"] || item.instituicoes;
+        if (iRaw) {
+          String(iRaw).split(";").forEach(s => { if (s.trim()) insts.add(s.trim()); });
+        }
       });
 
       respSelect.innerHTML = '<option value="">Todas</option>';
@@ -525,10 +715,10 @@
         if (fase && faseVal !== fase) return false;
 
         const respVal = item.Responsabilidade || item.responsabilidade || "";
-        if (resp && respVal !== resp) return false;
+        if (resp && !respVal.toLowerCase().includes(resp.toLowerCase())) return false;
 
         const instVal = item["Instituições / Contactos"] || item["Instituições/ empresas a contactar"] || item.instituicoes || "";
-        if (inst && instVal !== inst) return false;
+        if (inst && !instVal.toLowerCase().includes(inst.toLowerCase())) return false;
 
         const urgVal = item["Urgência / Importância"] || item["Urgência/ Importância"] || item.urgencia || "Normal";
         if (urgencia && !urgVal.includes(urgencia)) return false;
@@ -575,7 +765,7 @@
       tbody.innerHTML = "";
 
       if (!data || data.length === 0) {
-        tbody.innerHTML = `<tr><td colspan="12" class="text-center p-8 text-slate-400">Nenhuma tarefa encontrada com os filtros selecionados.</td></tr>`;
+        tbody.innerHTML = `<tr><td colspan="13" class="text-center p-8 text-slate-400">Nenhuma tarefa encontrada com os filtros selecionados.</td></tr>`;
         return;
       }
 
@@ -602,13 +792,19 @@
           progressBadge = '<span class="px-2 py-0.5 rounded-full text-[10px] font-medium bg-emerald-100 text-emerald-800 border border-emerald-200 whitespace-nowrap">Concluído</span>';
         } else if (progressoVal === "Em Curso") {
           progressBadge = '<span class="px-2 py-0.5 rounded-full text-[10px] font-medium bg-amber-100 text-amber-800 border border-amber-200 whitespace-nowrap">Em Curso</span>';
+        } else if (progressoVal === "A aguardar por terceiros") {
+          progressBadge = '<span class="px-2 py-0.5 rounded-full text-[10px] font-medium bg-blue-100 text-blue-800 border border-blue-200 whitespace-nowrap">Aguardar Terceiros</span>';
+        } else if (progressoVal === "Cancelado") {
+          progressBadge = '<span class="px-2 py-0.5 rounded-full text-[10px] font-medium bg-red-100 text-red-700 border border-red-200 whitespace-nowrap">Cancelado</span>';
         }
 
-        // 4. Responsabilidade
-        const respVal = item.Responsabilidade || item.responsabilidade || "-";
+        // 4. Responsabilidade (Múltiplas entidades)
+        const respVal = item.Responsabilidade || item.responsabilidade || "";
+        const respBadges = renderMultiBadges(respVal, "bg-slate-100 text-slate-700 border-slate-200");
 
-        // 5. Instituições / Contactos
-        const instVal = item["Instituições / Contactos"] || item["Instituições/ empresas a contactar"] || item.instituicoes || "-";
+        // 5. Instituições / Contactos (Múltiplas entidades)
+        const instVal = item["Instituições / Contactos"] || item["Instituições/ empresas a contactar"] || item.instituicoes || "";
+        const instBadges = renderMultiBadges(instVal, "bg-indigo-50 text-indigo-700 border-indigo-200");
 
         // 6. Urgência / Importância
         const urgenciaVal = item["Urgência / Importância"] || item["Urgência/ Importância"] || item.urgencia || "Normal";
@@ -619,11 +815,11 @@
           urgencyBadge = '<span class="px-1.5 py-0.5 rounded text-[10px] font-semibold bg-blue-100 text-blue-700 border border-blue-200 whitespace-nowrap">Importante</span>';
         }
 
-        // 7. Data de início (Formatada dd-mm-aaaa)
+        // 7. Data de início
         const dInicioRaw = item["Data de início"] || item["Data Início"] || item.dataInicio || "";
         const dInicioFormatted = formatDateToPT(dInicioRaw);
 
-        // 8. Data de fim (Formatada dd-mm-aaaa)
+        // 8. Data de fim
         const dFimRaw = item["Data de fim"] || item["Data Fim"] || item.dataFim || "";
         const dFimFormatted = formatDateToPT(dFimRaw);
 
@@ -655,29 +851,44 @@
           photosCell = `<span class="text-[10px] text-slate-400 italic" title="${fotoUrl}">Local</span>`;
         }
 
-        // 12. Ações
+        // 12. Histórico Auditoria (L, M, N, O com formato dd:mm:aaaa hh:mm)
+        const criador = item["Criado por"] || item.criadoPor || "-";
+        const dataCriacao = item["Data de criação"] || item.dataCriacao || "-";
+        const editor = item["Editado por"] || item.editadoPor || "";
+        const dataEdicao = item["Data de edição"] || item.dataEdicao || "";
+
+        let auditCell = `<div class="text-[10px] text-slate-500 leading-tight">
+          <div>👶 <strong>Criado:</strong> ${criador} <br><span class="text-[9px] text-slate-400">(${dataCriacao})</span></div>`;
+        if (editor) {
+          auditCell += `<div class="mt-1 pt-1 border-t border-slate-100 text-slate-600">✏️ <strong>Editado:</strong> ${editor} <br><span class="text-[9px] text-slate-400">(${dataEdicao})</span></div>`;
+        }
+        auditCell += `</div>`;
+
+        // 13. Ações
         const realIndex = rawTasksData.indexOf(item);
-        const editBtn = `<button onclick="editTask(${realIndex})" class="bg-slate-100 hover:bg-emerald-50 text-slate-600 hover:text-emerald-700 border border-slate-200 rounded px-2 py-1 text-[11px] font-medium transition flex items-center gap-1 mx-auto whitespace-nowrap">✏️ Editar</button>`;
+        const editBtn = `<button onclick="editTask(${realIndex})" class="bg-slate-100 hover:bg-emerald-50 text-slate-600 hover:text-emerald-700 border border-slate-200 rounded px-1.5 py-1 text-[11px] font-medium transition" title="Editar">✏️</button>`;
+        const deleteBtn = `<button onclick="deleteTask(${realIndex})" class="bg-slate-100 hover:bg-red-50 text-slate-600 hover:text-red-700 border border-slate-200 rounded px-1.5 py-1 text-[11px] font-medium transition" title="Apagar">🗑️</button>`;
 
         row.innerHTML = `
           <td class="p-2.5 overflow-hidden">${phaseBadge}</td>
           <td class="p-2.5 font-medium text-slate-800 leading-tight break-words">${tarefaVal}</td>
           <td class="p-2.5 overflow-hidden">${progressBadge}</td>
-          <td class="p-2.5 text-slate-600 leading-tight break-words">${respVal}</td>
-          <td class="p-2.5 text-slate-600 leading-tight break-words">${instVal}</td>
+          <td class="p-2.5 leading-tight">${respBadges}</td>
+          <td class="p-2.5 leading-tight">${instBadges}</td>
           <td class="p-2.5 overflow-hidden">${urgencyBadge}</td>
           <td class="p-2.5 text-slate-600 font-medium whitespace-nowrap">${dInicioFormatted}</td>
           <td class="p-2.5 text-slate-600 font-medium whitespace-nowrap">${dFimFormatted}</td>
           <td class="p-2.5 overflow-hidden">${custosCell}</td>
           <td class="p-2.5 text-slate-500 text-[11px] leading-tight break-words">${notasVal}</td>
           <td class="p-2.5 text-center overflow-hidden">${photosCell}</td>
-          <td class="p-2.5 text-center overflow-hidden">${editBtn}</td>
+          <td class="p-2.5 overflow-hidden">${auditCell}</td>
+          <td class="p-2.5 text-center overflow-hidden"><div class="flex items-center justify-center gap-1">${editBtn}${deleteBtn}</div></td>
         `;
         tbody.appendChild(row);
       });
     }
 
-    // DESENHAR GRÁFICO DE GANTT COM EIXO TEMPORAL DE MESES
+    // DESENHAR GRÁFICO DE GANTT
     function renderGanttChart(data) {
       const container = document.getElementById("gantt-chart-container");
       
@@ -705,17 +916,15 @@
         if (end > maxTimestamp) maxTimestamp = end;
       });
 
-      // Ajusta margens do início e fim do projeto
       minTimestamp -= 86400000 * 2;
       maxTimestamp += 86400000 * 2;
       const totalDuration = maxTimestamp - minTimestamp;
 
-      // Gerar a lista de meses no intervalo de tempo
       const monthNames = ["Jan", "Fev", "Mar", "Abr", "Mai", "Jun", "Jul", "Ago", "Set", "Out", "Nov", "Dez"];
       let monthsTicks = [];
 
       let currentDate = new Date(minTimestamp);
-      currentDate.setDate(1); // Primeiro dia do mês inicial
+      currentDate.setDate(1);
 
       while (currentDate.getTime() <= maxTimestamp) {
         const mTime = currentDate.getTime();
@@ -731,7 +940,6 @@
 
       let html = `<div class="space-y-3 min-w-[750px] text-xs">`;
 
-      // Eixo dos Meses (Topo do Gantt)
       html += `
         <div class="flex items-center gap-2 mb-2 border-b border-slate-200 pb-2">
           <div class="w-48 font-bold text-slate-500 text-right pr-2">Linha do Tempo:</div>
@@ -742,7 +950,6 @@
       });
       html += `</div></div>`;
 
-      // Barras de Gantt
       tasksWithDates.forEach(t => {
         const tName = t.Tarefa || t.tarefa || "Sem nome";
         const startStr = t["Data de início"] || t["Data Início"] || t.dataInicio;
@@ -758,6 +965,8 @@
         let colorBg = "bg-slate-400";
         if (prog === "Concluído") colorBg = "bg-emerald-600";
         else if (prog === "Em Curso") colorBg = "bg-amber-500";
+        else if (prog === "A aguardar por terceiros") colorBg = "bg-blue-500";
+        else if (prog === "Cancelado") colorBg = "bg-red-500";
 
         html += `
           <div class="flex items-center gap-2">
@@ -870,11 +1079,9 @@
       document.getElementById("input-instituicoes").value = item["Instituições / Contactos"] || item["Instituições/ empresas a contactar"] || item.instituicoes || "";
       document.getElementById("input-urgencia").value = item["Urgência / Importância"] || item["Urgência/ Importância"] || item.urgencia || "Normal";
       
-      // Ajusta data de início para o input HTML (YYYY-MM-DD)
       const rawInicio = item["Data de início"] || item["Data Início"] || item.dataInicio || "";
       document.getElementById("input-data-inicio").value = rawInicio ? rawInicio.split("T")[0] : "";
       
-      // Ajusta data de fim para o input HTML (YYYY-MM-DD)
       const rawFim = item["Data de fim"] || item["Data Fim"] || item.dataFim || "";
       document.getElementById("input-data-fim").value = rawFim ? rawFim.split("T")[0] : "";
 
@@ -889,6 +1096,33 @@
       document.getElementById("modal-action-title").innerText = "Editar Tarefa";
       document.getElementById("submit-btn-text").innerText = "Atualizar Tarefa";
       document.getElementById("modal").classList.remove("hidden");
+    }
+
+    async function deleteTask(index) {
+      const item = rawTasksData[index];
+      if (!item) return;
+
+      const tarefaNome = item.Tarefa || item.tarefa || "esta tarefa";
+      if (!confirm(`Tem a certeza de que deseja apagar a tarefa: "${tarefaNome}"?`)) return;
+
+      const rowIndex = item.rowIndex || (index + 2);
+
+      try {
+        await fetch(API_URL, {
+          method: "POST",
+          mode: "no-cors",
+          headers: { "Content-Type": "text/plain;charset=utf-8" },
+          body: JSON.stringify({
+            action: "deleteTask",
+            projeto: currentProject,
+            rowIndex: rowIndex
+          })
+        });
+
+        setTimeout(fetchTasks, 1000);
+      } catch (err) {
+        alert("Erro ao apagar a tarefa.");
+      }
     }
 
     function addCostRow(descricao = "", valor = "", responsavel = "Infralobo", fatura = "") {
@@ -1001,7 +1235,8 @@
           body: JSON.stringify({
             action: "duplicateProject",
             sourceProject: currentProject,
-            newProjectName: novoNome
+            newProjectName: novoNome,
+            currentUser: currentUser ? (currentUser.nome || currentUser.email) : "Anónimo"
           })
         });
 
@@ -1038,7 +1273,8 @@
         dataFim: document.getElementById("input-data-fim").value,
         notas: document.getElementById("input-notas").value,
         fotos: document.getElementById("input-fotos").value,
-        custos: custosArray
+        custos: custosArray,
+        currentUser: currentUser ? (currentUser.nome || currentUser.email) : "Anónimo"
       };
 
       try {
@@ -1103,10 +1339,6 @@
         });
       });
     }
-
-    loadProjects().then(() => {
-      makeTableResizable("resizable-table");
-    });
   </script>
 </body>
 </html>
