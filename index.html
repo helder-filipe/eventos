@@ -1,0 +1,858 @@
+<!DOCTYPE html>
+<html lang="pt">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Gestão Multi-Projeto - Action Lists</title>
+  <!-- Tailwind CSS via CDN -->
+  <script src="https://cdn.tailwindcss.com"></script>
+  <!-- Google Fonts -->
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+  <style>
+    body { font-family: 'Inter', sans-serif; }
+    ::-webkit-scrollbar { width: 6px; height: 6px; }
+    ::-webkit-scrollbar-track { background: #f1f5f9; }
+    ::-webkit-scrollbar-thumb { background: #cbd5e1; border-radius: 4px; }
+
+    /* Estilos para o redimensionamento de colunas */
+    th { position: relative; }
+    .resizer {
+      position: absolute;
+      right: 0;
+      top: 0;
+      height: 100%;
+      width: 5px;
+      background: rgba(226, 232, 240, 0.6);
+      cursor: col-resize;
+      user-select: none;
+    }
+    .resizer:hover, .resizing {
+      background: #059669;
+    }
+  </style>
+</head>
+<body class="bg-slate-50 text-slate-800 min-h-screen flex flex-col">
+
+  <!-- Header Section -->
+  <header class="bg-emerald-800 text-white shadow-md border-b border-emerald-900">
+    <div class="max-w-[98vw] mx-auto px-2 sm:px-4 py-4 flex flex-col lg:flex-row justify-between items-start lg:items-center gap-4">
+      
+      <div>
+        <div class="flex items-center gap-2">
+          <span class="text-2xl">📁</span>
+          <h1 class="text-xl sm:text-2xl font-bold tracking-tight">Plataforma de Projetos</h1>
+        </div>
+        <p class="text-emerald-200 text-xs mt-0.5">Gestão de Ações e Controlo Orçamental</p>
+      </div>
+
+      <!-- Controlos de Projeto e Nova Tarefa -->
+      <div class="flex flex-col sm:flex-row items-stretch sm:items-center gap-3 w-full lg:w-auto">
+        <div class="flex items-center gap-2 bg-emerald-900/60 p-1.5 rounded-lg border border-emerald-700/50">
+          <label for="project-select" class="text-xs font-semibold text-emerald-200 uppercase px-1 whitespace-nowrap">Projeto:</label>
+          <select id="project-select" onchange="changeProject(this.value)" class="bg-white text-slate-800 text-sm font-semibold rounded-md px-3 py-1.5 focus:outline-none focus:ring-2 focus:ring-emerald-400 cursor-pointer w-full sm:w-auto">
+            <option value="">A carregar...</option>
+          </select>
+          <button onclick="openProjectModal()" title="Criar novo projeto" class="bg-emerald-700 hover:bg-emerald-600 text-white p-1.5 rounded-md text-xs font-semibold flex items-center gap-1 transition px-2.5 whitespace-nowrap">
+            <span>+ Novo Projeto</span>
+          </button>
+        </div>
+
+        <button onclick="openModalForNew()" class="bg-emerald-600 hover:bg-emerald-500 text-white font-medium px-4 py-2 rounded-lg shadow-sm transition-all flex items-center justify-center gap-2 text-sm active:scale-95">
+          <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4" />
+          </svg>
+          Nova Tarefa
+        </button>
+      </div>
+
+    </div>
+  </header>
+
+  <!-- Main Container -->
+  <main class="max-w-[98vw] mx-auto px-2 sm:px-4 py-6 flex-grow w-full">
+
+    <!-- Dashboard KPI Cards (Clicáveis para filtrar estado!) -->
+    <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 mb-4">
+      <div id="kpi-card-all" onclick="setKpiFilter('todos')" class="bg-white p-4 rounded-xl shadow-sm border-2 border-emerald-500 hover:border-emerald-600 cursor-pointer transition flex items-center justify-between group">
+        <div>
+          <span class="text-xs font-semibold uppercase tracking-wider text-slate-400 group-hover:text-slate-600">Total de Tarefas</span>
+          <p id="kpi-total" class="text-2xl font-bold text-slate-800 mt-1">0</p>
+        </div>
+        <div class="w-10 h-10 rounded-lg bg-slate-100 flex items-center justify-center text-slate-500">📋</div>
+      </div>
+
+      <div id="kpi-card-completed" onclick="setKpiFilter('Concluído')" class="bg-white p-4 rounded-xl shadow-sm border-2 border-transparent hover:border-emerald-400 cursor-pointer transition flex items-center justify-between group">
+        <div>
+          <span class="text-xs font-semibold uppercase tracking-wider text-emerald-600">Concluídas</span>
+          <p id="kpi-completed" class="text-2xl font-bold text-emerald-600 mt-1">0</p>
+        </div>
+        <div class="w-10 h-10 rounded-lg bg-emerald-50 flex items-center justify-center text-emerald-600">✅</div>
+      </div>
+
+      <div id="kpi-card-pending" onclick="setKpiFilter('pendentes')" class="bg-white p-4 rounded-xl shadow-sm border-2 border-transparent hover:border-amber-400 cursor-pointer transition flex items-center justify-between group">
+        <div>
+          <span class="text-xs font-semibold uppercase tracking-wider text-amber-600">Pendentes / Em Curso</span>
+          <p id="kpi-pending" class="text-2xl font-bold text-amber-600 mt-1">0</p>
+        </div>
+        <div class="w-10 h-10 rounded-lg bg-amber-50 flex items-center justify-center text-amber-600">⏳</div>
+      </div>
+
+      <div class="bg-white p-4 rounded-xl shadow-sm border border-slate-200 flex items-center justify-between">
+        <div>
+          <span class="text-xs font-semibold uppercase tracking-wider text-blue-600">Custo Total Projeto</span>
+          <p id="kpi-total-cost" class="text-xl font-bold text-blue-800 mt-1">0,00 €</p>
+          <span id="kpi-cost-breakdown" class="text-[10px] text-slate-500 mt-0.5 block">Infralobo: 0 € | Parceiros: 0 €</span>
+        </div>
+        <div class="w-10 h-10 rounded-lg bg-blue-50 flex items-center justify-center text-blue-600">💶</div>
+      </div>
+    </div>
+
+    <!-- Data Table Card + Filtros Combinados -->
+    <div class="bg-white rounded-xl shadow-sm border border-slate-200/80 overflow-hidden">
+      
+      <!-- Toolbar de Filtros Avançados -->
+      <div class="p-3 border-b border-slate-200 bg-slate-50/80 space-y-3">
+        <div class="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-3">
+          <div class="flex items-center gap-2">
+            <h2 id="current-project-title" class="font-semibold text-slate-700 text-sm sm:text-base">Lista de Ações</h2>
+            <span id="task-count-badge" class="bg-slate-200 text-slate-700 text-xs px-2 py-0.5 rounded-full font-medium">0</span>
+          </div>
+
+          <div class="flex items-center gap-2 w-full sm:w-auto justify-end">
+            <input type="text" id="search-input" onkeyup="applyAllFilters()" placeholder="Pesquisar por texto..." class="border border-slate-300 rounded-lg text-xs px-3 py-1.5 w-48 sm:w-64 focus:outline-none focus:ring-2 focus:ring-emerald-500">
+            <button onclick="fetchTasks()" class="text-slate-600 hover:text-emerald-700 bg-white border border-slate-200 hover:border-emerald-300 text-xs font-medium px-3 py-1.5 rounded-lg shadow-sm transition flex items-center gap-1.5 whitespace-nowrap">
+              <svg id="refresh-icon" xmlns="http://www.w3.org/2000/svg" class="h-3.5 w-3.5 text-slate-500" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" />
+              </svg>
+              Atualizar
+            </button>
+          </div>
+        </div>
+
+        <!-- Linha com os Filtros Específicos -->
+        <div class="grid grid-cols-2 sm:grid-cols-4 lg:grid-cols-5 gap-2 pt-2 border-t border-slate-200/60 text-xs">
+          <div>
+            <label class="block text-[10px] font-bold text-slate-500 uppercase mb-0.5">Fase:</label>
+            <select id="filter-fase" onchange="applyAllFilters()" class="w-full border border-slate-300 rounded p-1.5 bg-white text-slate-700 font-medium focus:ring-1 focus:ring-emerald-500 outline-none">
+              <option value="">Todas as Fases</option>
+              <option value="Pré-evento">Pré-evento</option>
+              <option value="Evento">Evento</option>
+              <option value="Pós-evento">Pós-evento</option>
+            </select>
+          </div>
+
+          <div>
+            <label class="block text-[10px] font-bold text-slate-500 uppercase mb-0.5">Responsabilidade:</label>
+            <select id="filter-resp" onchange="applyAllFilters()" class="w-full border border-slate-300 rounded p-1.5 bg-white text-slate-700 font-medium focus:ring-1 focus:ring-emerald-500 outline-none">
+              <option value="">Todas</option>
+            </select>
+          </div>
+
+          <div>
+            <label class="block text-[10px] font-bold text-slate-500 uppercase mb-0.5">Instituições / Contactos:</label>
+            <select id="filter-inst" onchange="applyAllFilters()" class="w-full border border-slate-300 rounded p-1.5 bg-white text-slate-700 font-medium focus:ring-1 focus:ring-emerald-500 outline-none">
+              <option value="">Todas</option>
+            </select>
+          </div>
+
+          <div>
+            <label class="block text-[10px] font-bold text-slate-500 uppercase mb-0.5">Urgência / Importância:</label>
+            <select id="filter-urgencia" onchange="applyAllFilters()" class="w-full border border-slate-300 rounded p-1.5 bg-white text-slate-700 font-medium focus:ring-1 focus:ring-emerald-500 outline-none">
+              <option value="">Todas</option>
+              <option value="Urgente">Urgente / Importante</option>
+              <option value="Importante">Importante</option>
+              <option value="Normal">Normal</option>
+            </select>
+          </div>
+
+          <div class="col-span-2 sm:col-span-4 lg:col-span-1 flex items-end">
+            <button onclick="resetFilters()" class="w-full bg-slate-200 hover:bg-slate-300 text-slate-700 font-medium p-1.5 rounded transition text-xs flex items-center justify-center gap-1">
+              <span>🧹 Limpar Filtros</span>
+            </button>
+          </div>
+        </div>
+      </div>
+
+      <!-- Table View com Colunas Redimensionáveis -->
+      <div class="w-full overflow-x-auto">
+        <table id="resizable-table" class="w-full text-left border-collapse table-fixed">
+          <thead>
+            <tr class="bg-slate-100/80 text-slate-600 text-[11px] font-semibold uppercase tracking-wider border-b border-slate-200">
+              <th style="width: 110px;" class="py-2.5 px-2">Fase</th>
+              <th style="width: 260px;" class="py-2.5 px-2">Tarefa</th>
+              <th style="width: 110px;" class="py-2.5 px-2">Progresso</th>
+              <th style="width: 140px;" class="py-2.5 px-2">Resp.</th>
+              <th style="width: 180px;" class="py-2.5 px-2">Instituições / Contactos</th>
+              <th style="width: 120px;" class="py-2.5 px-2">Urgência</th>
+              <th style="width: 180px;" class="py-2.5 px-2">Custos</th>
+              <th style="width: 220px;" class="py-2.5 px-2">Notas</th>
+              <th style="width: 80px;" class="py-2.5 px-2 text-center">Fotos</th>
+              <th style="width: 90px;" class="py-2.5 px-2 text-center">Ações</th>
+            </tr>
+          </thead>
+          <tbody id="task-list" class="divide-y divide-slate-100 text-xs">
+            <tr>
+              <td colspan="10" class="text-center p-12 text-slate-400">
+                <div class="inline-block animate-spin rounded-full h-8 w-8 border-4 border-slate-200 border-t-emerald-600 mb-2"></div>
+                <p>A carregar dados...</p>
+              </td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
+  </main>
+
+  <!-- MODAL 1: Criar Novo Projeto -->
+  <div id="project-modal" class="fixed inset-0 bg-slate-900/50 backdrop-blur-sm hidden flex items-center justify-center p-4 z-50">
+    <div class="bg-white rounded-2xl shadow-2xl w-full max-w-md overflow-hidden">
+      <div class="bg-slate-50 px-6 py-4 border-b border-slate-200 flex justify-between items-center">
+        <h3 class="text-base font-bold text-slate-800 flex items-center gap-2">
+          <span>📁</span> Criar Novo Projeto
+        </h3>
+        <button onclick="closeProjectModal()" class="text-slate-400 hover:text-slate-600 text-xl font-bold p-1 rounded-lg">&times;</button>
+      </div>
+
+      <form onsubmit="submitNewProject(event)" class="p-6 space-y-4">
+        <div>
+          <label class="block text-xs font-semibold text-slate-600 uppercase tracking-wider mb-1">Nome do Projeto / Evento *</label>
+          <input type="text" id="input-nome-projeto" required placeholder="Ex: Feira do Livro 2026" class="w-full border border-slate-300 rounded-lg p-2.5 text-sm focus:ring-2 focus:ring-emerald-500 outline-none">
+          <p class="text-xs text-slate-400 mt-1">Irá criar uma nova aba no Google Sheets com este nome.</p>
+        </div>
+
+        <div class="flex justify-end gap-3 pt-4 border-t border-slate-100">
+          <button type="button" onclick="closeProjectModal()" class="px-4 py-2.5 border border-slate-300 text-slate-600 rounded-lg text-sm font-medium hover:bg-slate-100">Cancelar</button>
+          <button type="submit" id="create-project-btn" class="px-5 py-2.5 bg-emerald-700 hover:bg-emerald-600 text-white rounded-lg text-sm font-medium shadow-sm">
+            <span>Criar Projeto</span>
+          </button>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  <!-- MODAL 2: Criar / Editar Tarefa -->
+  <div id="modal" class="fixed inset-0 bg-slate-900/50 backdrop-blur-sm hidden flex items-center justify-center p-4 z-50 overflow-y-auto">
+    <div class="bg-white rounded-2xl shadow-2xl w-full max-w-2xl my-8 overflow-hidden">
+      
+      <div class="bg-slate-50 px-6 py-4 border-b border-slate-200 flex justify-between items-center">
+        <h3 class="text-base font-bold text-slate-800 flex items-center gap-2">
+          <span>📝</span> <span id="modal-action-title">Nova Tarefa</span> em <span id="modal-project-name" class="text-emerald-700"></span>
+        </h3>
+        <button onclick="closeModal()" class="text-slate-400 hover:text-slate-600 text-xl font-bold p-1 rounded-lg">&times;</button>
+      </div>
+
+      <form id="task-form" onsubmit="submitTask(event)" class="p-6 space-y-4">
+        <input type="hidden" id="input-row-index" value="">
+
+        <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+          <div>
+            <label class="block text-xs font-semibold text-slate-600 uppercase tracking-wider mb-1">Fase do Evento *</label>
+            <select id="input-fase" required class="w-full border border-slate-300 rounded-lg p-2.5 text-sm focus:ring-2 focus:ring-emerald-500 outline-none bg-white">
+              <option value="Pré-evento" selected>Pré-evento</option>
+              <option value="Evento">Evento</option>
+              <option value="Pós-evento">Pós-evento</option>
+            </select>
+          </div>
+
+          <div>
+            <label class="block text-xs font-semibold text-slate-600 uppercase tracking-wider mb-1">Progresso</label>
+            <select id="input-progresso" class="w-full border border-slate-300 rounded-lg p-2.5 text-sm focus:ring-2 focus:ring-emerald-500 outline-none bg-white">
+              <option value="Em Curso">Em Curso</option>
+              <option value="Concluído">Concluído</option>
+              <option value="Pendente" selected>Pendente</option>
+            </select>
+          </div>
+        </div>
+
+        <div>
+          <label class="block text-xs font-semibold text-slate-600 uppercase tracking-wider mb-1">Descrição da Tarefa *</label>
+          <input type="text" id="input-tarefa" required placeholder="Descrição clara da ação" class="w-full border border-slate-300 rounded-lg p-2.5 text-sm focus:ring-2 focus:ring-emerald-500 outline-none">
+        </div>
+
+        <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+          <div>
+            <label class="block text-xs font-semibold text-slate-600 uppercase tracking-wider mb-1">Urgência / Importância</label>
+            <select id="input-urgencia" class="w-full border border-slate-300 rounded-lg p-2.5 text-sm focus:ring-2 focus:ring-emerald-500 outline-none bg-white">
+              <option value="Importante">Importante</option>
+              <option value="Importante e Urgente">Importante e Urgente</option>
+              <option value="Normal" selected>Normal</option>
+            </select>
+          </div>
+
+          <div>
+            <label class="block text-xs font-semibold text-slate-600 uppercase tracking-wider mb-1">Responsabilidade Geral</label>
+            <input type="text" id="input-responsabilidade" placeholder="Ex: Infralobo / Parceiro" class="w-full border border-slate-300 rounded-lg p-2.5 text-sm focus:ring-2 focus:ring-emerald-500 outline-none">
+          </div>
+        </div>
+
+        <div>
+          <label class="block text-xs font-semibold text-slate-600 uppercase tracking-wider mb-1">Instituições / Contactos</label>
+          <input type="text" id="input-instituicoes" placeholder="Ex: Capitania, Escolas" class="w-full border border-slate-300 rounded-lg p-2.5 text-sm focus:ring-2 focus:ring-emerald-500 outline-none">
+        </div>
+
+        <!-- SEÇÃO DE CUSTOS MULTI-ITEM -->
+        <div class="border border-slate-200 rounded-xl p-4 bg-slate-50/70 space-y-3">
+          <div class="flex justify-between items-center">
+            <label class="text-xs font-bold text-slate-700 uppercase tracking-wider flex items-center gap-1.5">
+              <span>💶</span> Custos Associados à Tarefa
+            </label>
+            <button type="button" onclick="addCostRow()" class="text-xs bg-emerald-100 hover:bg-emerald-200 text-emerald-800 font-semibold px-2.5 py-1 rounded-md transition flex items-center gap-1">
+              <span>+ Adicionar Custo</span>
+            </button>
+          </div>
+
+          <div id="cost-items-container" class="space-y-2.5"></div>
+        </div>
+
+        <div>
+          <label class="block text-xs font-semibold text-slate-600 uppercase tracking-wider mb-1">Link de Fotos / Documentos Gerais (URL)</label>
+          <input type="url" id="input-fotos" placeholder="https://..." class="w-full border border-slate-300 rounded-lg p-2.5 text-sm focus:ring-2 focus:ring-emerald-500 outline-none">
+        </div>
+
+        <div>
+          <label class="block text-xs font-semibold text-slate-600 uppercase tracking-wider mb-1">Notas / Detalhes</label>
+          <textarea id="input-notas" rows="2" placeholder="Informações adicionais..." class="w-full border border-slate-300 rounded-lg p-2.5 text-sm focus:ring-2 focus:ring-emerald-500 outline-none resize-none"></textarea>
+        </div>
+
+        <div class="flex justify-end gap-3 pt-4 border-t border-slate-100">
+          <button type="button" onclick="closeModal()" class="px-4 py-2.5 border border-slate-300 text-slate-600 rounded-lg text-sm font-medium hover:bg-slate-100">Cancelar</button>
+          <button type="submit" id="submit-btn" class="px-5 py-2.5 bg-emerald-700 hover:bg-emerald-600 text-white rounded-lg text-sm font-medium shadow-sm">
+            <span id="submit-btn-text">Guardar Tarefa</span>
+          </button>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  <!-- JavaScript Logic -->
+  <script>
+    const API_URL = "https://script.google.com/macros/s/AKfycbw_Unni-QHjpMRT2gwPR8Q4MzmigHZ8gvrLS_jUU-AgAhU0jrsujQ1odl8e_eLV59T55Q/exec";
+
+    let currentProject = "";
+    let rawTasksData = [];
+    let selectedKpiFilter = "todos"; // "todos", "Concluído", "pendentes"
+
+    async function loadProjects(selectProjectName = null) {
+      const select = document.getElementById("project-select");
+      
+      try {
+        const response = await fetch(`${API_URL}?action=getProjects`, { redirect: "follow" });
+        const projects = await response.json();
+
+        select.innerHTML = "";
+
+        if (Array.isArray(projects) && projects.length > 0) {
+          projects.forEach(p => {
+            const opt = document.createElement("option");
+            opt.value = p;
+            opt.innerText = p;
+            select.appendChild(opt);
+          });
+          currentProject = selectProjectName && projects.includes(selectProjectName) ? selectProjectName : projects[0];
+          select.value = currentProject;
+        } else {
+          select.innerHTML = '<option value="Folha1">Folha1</option>';
+          currentProject = "Folha1";
+        }
+      } catch (err) {
+        console.warn("Aviso ao carregar lista de projetos:", err);
+        select.innerHTML = '<option value="Folha1">Folha1</option>';
+        currentProject = "Folha1";
+      }
+
+      updateUIProjectName();
+      fetchTasks();
+    }
+
+    function changeProject(project) {
+      if (!project) return;
+      currentProject = project;
+      updateUIProjectName();
+      fetchTasks();
+    }
+
+    function updateUIProjectName() {
+      document.getElementById("current-project-title").innerText = `Lista de Ações — ${currentProject}`;
+      document.getElementById("modal-project-name").innerText = currentProject;
+    }
+
+    async function fetchTasks() {
+      const tbody = document.getElementById("task-list");
+      const refreshIcon = document.getElementById("refresh-icon");
+      if (refreshIcon) refreshIcon.classList.add("animate-spin");
+
+      tbody.innerHTML = `
+        <tr>
+          <td colspan="10" class="text-center p-12 text-slate-400">
+            <div class="inline-block animate-spin rounded-full h-7 w-7 border-4 border-slate-200 border-t-emerald-600 mb-2"></div>
+            <p>A carregar tarefas de <strong>${currentProject || "projeto"}</strong>...</p>
+          </td>
+        </tr>
+      `;
+
+      try {
+        const fetchUrl = `${API_URL}?project=${encodeURIComponent(currentProject)}`;
+        const response = await fetch(fetchUrl, { method: "GET", redirect: "follow" });
+        const data = await response.json();
+
+        rawTasksData = Array.isArray(data) ? data : [];
+        populateFilterDropdowns(rawTasksData);
+        applyAllFilters();
+        updateKPIs(rawTasksData);
+
+      } catch (error) {
+        console.error("Erro ao carregar tarefas:", error);
+        tbody.innerHTML = `
+          <tr>
+            <td colspan="10" class="text-center p-8 text-red-500 bg-red-50/50">
+              ⚠️ Não foi possível carregar as tarefas. Certifica-te de que colocaste o URL correto do Apps Script.
+            </td>
+          </tr>
+        `;
+      } finally {
+        if (refreshIcon) refreshIcon.classList.remove("animate-spin");
+      }
+    }
+
+    function populateFilterDropdowns(data) {
+      const respSelect = document.getElementById("filter-resp");
+      const instSelect = document.getElementById("filter-inst");
+
+      const resps = new Set();
+      const insts = new Set();
+
+      data.forEach(item => {
+        const r = item.Responsabilidade || item.responsabilidade;
+        if (r && r.trim()) resps.add(r.trim());
+
+        const i = item["Instituições / Contactos"] || item["Instituições/ empresas a contactar"] || item.instituicoes;
+        if (i && i.trim()) insts.add(i.trim());
+      });
+
+      respSelect.innerHTML = '<option value="">Todas</option>';
+      resps.forEach(r => respSelect.innerHTML += `<option value="${r}">${r}</option>`);
+
+      instSelect.innerHTML = '<option value="">Todas</option>';
+      insts.forEach(i => instSelect.innerHTML += `<option value="${i}">${i}</option>`);
+    }
+
+    // APLICAR TODOS OS FILTROS COMBINADOS (KPI + DROP DOWNS + PESQUISA)
+    function applyAllFilters() {
+      const search = document.getElementById("search-input").value.toLowerCase();
+      const fase = document.getElementById("filter-fase").value;
+      const resp = document.getElementById("filter-resp").value;
+      const inst = document.getElementById("filter-inst").value;
+      const urgencia = document.getElementById("filter-urgencia").value;
+
+      const filtered = rawTasksData.filter(item => {
+        const progresso = item.Progresso || item.progresso || "Pendente";
+        
+        // 1. Filtro KPI Estado
+        if (selectedKpiFilter === "Concluído" && progresso !== "Concluído") return false;
+        if (selectedKpiFilter === "pendentes" && progresso === "Concluído") return false;
+
+        // 2. Filtro Fase
+        const faseVal = item.Fase || item.fase || "Pré-evento";
+        if (fase && faseVal !== fase) return false;
+
+        // 3. Filtro Resp
+        const respVal = item.Responsabilidade || item.responsabilidade || "";
+        if (resp && respVal !== resp) return false;
+
+        // 4. Filtro Inst
+        const instVal = item["Instituições / Contactos"] || item["Instituições/ empresas a contactar"] || item.instituicoes || "";
+        if (inst && instVal !== inst) return false;
+
+        // 5. Filtro Urgência
+        const urgVal = item["Urgência / Importância"] || item["Urgência/ Importância"] || item.urgencia || "Normal";
+        if (urgencia && !urgVal.includes(urgencia)) return false;
+
+        // 6. Texto Livre
+        if (search) {
+          const t = (item.Tarefa || item.tarefa || "").toLowerCase();
+          const n = (item.Notas || item.notas || "").toLowerCase();
+          const r = respVal.toLowerCase();
+          const i = instVal.toLowerCase();
+          if (!t.includes(search) && !n.includes(search) && !r.includes(search) && !i.includes(search)) return false;
+        }
+
+        return true;
+      });
+
+      renderTable(filtered);
+    }
+
+    function setKpiFilter(filter) {
+      selectedKpiFilter = filter;
+
+      // Atualizar Estilos dos Cartões KPI
+      const cardAll = document.getElementById("kpi-card-all");
+      const cardComp = document.getElementById("kpi-card-completed");
+      const cardPend = document.getElementById("kpi-card-pending");
+
+      [cardAll, cardComp, cardPend].forEach(c => c.className = c.className.replace("border-emerald-500 border-amber-500 border-2", "border-transparent border"));
+
+      if (filter === "todos") cardAll.className += " border-2 border-emerald-500";
+      else if (filter === "Concluído") cardComp.className += " border-2 border-emerald-500";
+      else if (filter === "pendentes") cardPend.className += " border-2 border-amber-500";
+
+      applyAllFilters();
+    }
+
+    function resetFilters() {
+      document.getElementById("search-input").value = "";
+      document.getElementById("filter-fase").value = "";
+      document.getElementById("filter-resp").value = "";
+      document.getElementById("filter-inst").value = "";
+      document.getElementById("filter-urgencia").value = "";
+      setKpiFilter("todos");
+    }
+
+    function renderTable(data) {
+      const tbody = document.getElementById("task-list");
+      document.getElementById("task-count-badge").innerText = data.length;
+      tbody.innerHTML = "";
+
+      if (!data || data.length === 0) {
+        tbody.innerHTML = `<tr><td colspan="10" class="text-center p-8 text-slate-400">Nenhuma tarefa encontrada com os filtros selecionados.</td></tr>`;
+        return;
+      }
+
+      data.forEach((item, index) => {
+        const row = document.createElement("tr");
+        row.className = "hover:bg-slate-50/80 transition border-b border-slate-100";
+
+        const faseVal = item.Fase || item.fase || "Pré-evento";
+        let phaseBadge = '<span class="px-1.5 py-0.5 rounded text-[10px] font-semibold bg-slate-100 text-slate-700 whitespace-nowrap">Pré-evento</span>';
+        if (faseVal === "Evento") {
+          phaseBadge = '<span class="px-1.5 py-0.5 rounded text-[10px] font-semibold bg-indigo-100 text-indigo-700 whitespace-nowrap">Evento</span>';
+        } else if (faseVal === "Pós-evento") {
+          phaseBadge = '<span class="px-1.5 py-0.5 rounded text-[10px] font-semibold bg-purple-100 text-purple-700 whitespace-nowrap">Pós-evento</span>';
+        }
+
+        const tarefaVal = item.Tarefa || item.tarefa || "-";
+
+        const progressoVal = item.Progresso || item.progresso || "Pendente";
+        let progressBadge = '<span class="px-2 py-0.5 rounded-full text-[10px] font-medium bg-slate-100 text-slate-600 whitespace-nowrap">Pendente</span>';
+        if (progressoVal === "Concluído") {
+          progressBadge = '<span class="px-2 py-0.5 rounded-full text-[10px] font-medium bg-emerald-100 text-emerald-800 border border-emerald-200 whitespace-nowrap">Concluído</span>';
+        } else if (progressoVal === "Em Curso") {
+          progressBadge = '<span class="px-2 py-0.5 rounded-full text-[10px] font-medium bg-amber-100 text-amber-800 border border-amber-200 whitespace-nowrap">Em Curso</span>';
+        }
+
+        const respVal = item.Responsabilidade || item.responsabilidade || "-";
+        const instVal = item["Instituições / Contactos"] || item["Instituições/ empresas a contactar"] || item.instituicoes || "-";
+
+        const urgenciaVal = item["Urgência / Importância"] || item["Urgência/ Importância"] || item.urgencia || "Normal";
+        let urgencyBadge = '<span class="text-slate-500 text-[11px]">Normal</span>';
+        if (String(urgenciaVal).includes("Urgente")) {
+          urgencyBadge = '<span class="px-1.5 py-0.5 rounded text-[10px] font-semibold bg-red-100 text-red-700 border border-red-200 whitespace-nowrap">Urgente</span>';
+        } else if (String(urgenciaVal).includes("Importante")) {
+          urgencyBadge = '<span class="px-1.5 py-0.5 rounded text-[10px] font-semibold bg-blue-100 text-blue-700 border border-blue-200 whitespace-nowrap">Importante</span>';
+        }
+
+        const custosLista = parseCustos(item.Custos || item.custos);
+        let custosCell = '<span class="text-slate-300 text-[11px]">-</span>';
+        if (custosLista.length > 0) {
+          const totalTarefa = custosLista.reduce((acc, c) => acc + (parseFloat(c.valor) || 0), 0);
+          
+          let detalhesHtml = custosLista.map(c => {
+            const faturaLink = c.fatura ? `<a href="${c.fatura}" target="_blank" class="text-blue-600 hover:underline">📄 Fat.</a>` : '';
+            return `<div class="text-[10px] text-slate-600 flex justify-between gap-1 border-b border-slate-100 py-0.5">
+              <span><strong>${c.descricao || 'Item'}:</strong> ${parseFloat(c.valor || 0).toFixed(2)}€ (${c.responsavel})</span>
+              ${faturaLink}
+            </div>`;
+          }).join('');
+
+          custosCell = `
+            <div>
+              <span class="font-bold text-slate-800 text-[11px]">${totalTarefa.toFixed(2)} €</span>
+              <div class="mt-0.5 bg-slate-50 p-1 rounded border border-slate-200/60">${detalhesHtml}</div>
+            </div>
+          `;
+        }
+
+        const notasVal = item.Notas || item.notas || "-";
+
+        const fotoUrl = item.Fotos || item.fotos || "";
+        let photosCell = '<span class="text-slate-300">-</span>';
+        if (fotoUrl && String(fotoUrl).trim().startsWith("http")) {
+          photosCell = `<a href="${String(fotoUrl).trim()}" target="_blank" class="inline-flex items-center justify-center p-1 bg-emerald-50 text-emerald-700 hover:bg-emerald-100 rounded text-[10px] font-medium gap-0.5 whitespace-nowrap">🖼️ Fotos</a>`;
+        } else if (fotoUrl && String(fotoUrl).trim() !== "") {
+          photosCell = `<span class="text-[10px] text-slate-400 italic" title="${fotoUrl}">Local</span>`;
+        }
+
+        const realIndex = rawTasksData.indexOf(item);
+        const editBtn = `<button onclick="editTask(${realIndex})" class="bg-slate-100 hover:bg-emerald-50 text-slate-600 hover:text-emerald-700 border border-slate-200 rounded px-2 py-1 text-[11px] font-medium transition flex items-center gap-1 mx-auto whitespace-nowrap">✏️ Editar</button>`;
+
+        row.innerHTML = `
+          <td class="p-2.5 overflow-hidden">${phaseBadge}</td>
+          <td class="p-2.5 font-medium text-slate-800 leading-tight break-words">${tarefaVal}</td>
+          <td class="p-2.5 overflow-hidden">${progressBadge}</td>
+          <td class="p-2.5 text-slate-600 leading-tight break-words">${respVal}</td>
+          <td class="p-2.5 text-slate-600 leading-tight break-words">${instVal}</td>
+          <td class="p-2.5 overflow-hidden">${urgencyBadge}</td>
+          <td class="p-2.5 overflow-hidden">${custosCell}</td>
+          <td class="p-2.5 text-slate-500 text-[11px] leading-tight break-words">${notasVal}</td>
+          <td class="p-2.5 text-center overflow-hidden">${photosCell}</td>
+          <td class="p-2.5 text-center overflow-hidden">${editBtn}</td>
+        `;
+        tbody.appendChild(row);
+      });
+    }
+
+    function parseCustos(custosRaw) {
+      if (!custosRaw) return [];
+      if (Array.isArray(custosRaw)) return custosRaw;
+      try { return JSON.parse(custosRaw); } catch (e) { return []; }
+    }
+
+    function updateKPIs(data) {
+      document.getElementById("kpi-total").innerText = data.length;
+      const completed = data.filter(d => (d.Progresso || d.progresso) === "Concluído").length;
+      document.getElementById("kpi-completed").innerText = completed;
+      document.getElementById("kpi-pending").innerText = data.length - completed;
+
+      let totalGeral = 0;
+      let totalInfralobo = 0;
+      let totalParceiros = 0;
+
+      data.forEach(d => {
+        const lista = parseCustos(d.Custos || d.custos);
+        lista.forEach(c => {
+          const val = parseFloat(c.valor) || 0;
+          totalGeral += val;
+          if (String(c.responsavel).toLowerCase().includes("infralobo")) {
+            totalInfralobo += val;
+          } else {
+            totalParceiros += val;
+          }
+        });
+      });
+
+      document.getElementById("kpi-total-cost").innerText = `${totalGeral.toFixed(2)} €`;
+      document.getElementById("kpi-cost-breakdown").innerText = `Infralobo: ${totalInfralobo.toFixed(2)} € | Parceiros: ${totalParceiros.toFixed(2)} €`;
+    }
+
+    function openModalForNew() {
+      document.getElementById("task-form").reset();
+      document.getElementById("input-row-index").value = "";
+      document.getElementById("cost-items-container").innerHTML = "";
+      document.getElementById("modal-action-title").innerText = "Nova Tarefa";
+      document.getElementById("submit-btn-text").innerText = "Guardar Tarefa";
+      document.getElementById("modal").classList.remove("hidden");
+    }
+
+    function editTask(index) {
+      const item = rawTasksData[index];
+      if (!item) return;
+
+      document.getElementById("input-row-index").value = item.rowIndex || (index + 2);
+      document.getElementById("input-fase").value = item.Fase || item.fase || "Pré-evento";
+      document.getElementById("input-tarefa").value = item.Tarefa || item.tarefa || "";
+      document.getElementById("input-progresso").value = item.Progresso || item.progresso || "Pendente";
+      document.getElementById("input-urgencia").value = item["Urgência / Importância"] || item["Urgência/ Importância"] || item.urgencia || "Normal";
+      document.getElementById("input-responsabilidade").value = item.Responsabilidade || item.responsabilidade || "";
+      document.getElementById("input-instituicoes").value = item["Instituições / Contactos"] || item["Instituições/ empresas a contactar"] || item.instituicoes || "";
+      document.getElementById("input-notas").value = item.Notas || item.notas || "";
+      document.getElementById("input-fotos").value = item.Fotos || item.fotos || "";
+
+      const container = document.getElementById("cost-items-container");
+      container.innerHTML = "";
+      const custosLista = parseCustos(item.Custos || item.custos);
+      custosLista.forEach(c => {
+        addCostRow(c.descricao, c.valor, c.responsavel, c.fatura);
+      });
+
+      document.getElementById("modal-action-title").innerText = "Editar Tarefa";
+      document.getElementById("submit-btn-text").innerText = "Atualizar Tarefa";
+      document.getElementById("modal").classList.remove("hidden");
+    }
+
+    function addCostRow(descricao = "", valor = "", responsavel = "Infralobo", fatura = "") {
+      const container = document.getElementById("cost-items-container");
+      const rowId = `cost-row-${Date.now()}-${Math.random().toString(36).substr(2, 4)}`;
+
+      const row = document.createElement("div");
+      row.id = rowId;
+      row.className = "grid grid-cols-1 sm:grid-cols-12 gap-2 items-center bg-white p-2.5 rounded-lg border border-slate-200 text-xs";
+
+      row.innerHTML = `
+        <div class="sm:col-span-4">
+          <input type="text" placeholder="Ex: Autocarro / Material" value="${descricao}" class="cost-desc w-full border border-slate-300 rounded p-1.5 focus:outline-none focus:ring-1 focus:ring-emerald-500">
+        </div>
+        <div class="sm:col-span-2">
+          <input type="number" step="0.01" placeholder="Valor €" value="${valor}" class="cost-val w-full border border-slate-300 rounded p-1.5 focus:outline-none focus:ring-1 focus:ring-emerald-500">
+        </div>
+        <div class="sm:col-span-2">
+          <select class="cost-resp w-full border border-slate-300 rounded p-1.5 focus:outline-none focus:ring-1 focus:ring-emerald-500 bg-white">
+            <option value="Infralobo" ${responsavel === "Infralobo" ? "selected" : ""}>Infralobo</option>
+            <option value="Parceiro" ${responsavel === "Parceiro" ? "selected" : ""}>Parceiro</option>
+            <option value="Partilhado" ${responsavel === "Partilhado" ? "selected" : ""}>Partilhado</option>
+          </select>
+        </div>
+        <div class="sm:col-span-3">
+          <input type="url" placeholder="Link Fatura (https://...)" value="${fatura}" class="cost-fatura w-full border border-slate-300 rounded p-1.5 focus:outline-none focus:ring-1 focus:ring-emerald-500">
+        </div>
+        <div class="sm:col-span-1 text-right">
+          <button type="button" onclick="removeCostRow('${rowId}')" class="text-red-500 hover:text-red-700 font-bold p-1 text-sm">&times;</button>
+        </div>
+      `;
+
+      container.appendChild(row);
+    }
+
+    function removeCostRow(rowId) {
+      const elem = document.getElementById(rowId);
+      if (elem) elem.remove();
+    }
+
+    function collectCustosFromForm() {
+      const rows = document.querySelectorAll("#cost-items-container > div");
+      const custos = [];
+
+      rows.forEach(r => {
+        const desc = r.querySelector(".cost-desc")?.value.trim();
+        const val = r.querySelector(".cost-val")?.value;
+        const resp = r.querySelector(".cost-resp")?.value;
+        const fatura = r.querySelector(".cost-fatura")?.value.trim();
+
+        if (desc || val) {
+          custos.push({
+            descricao: desc || "Sem descrição",
+            valor: parseFloat(val) || 0,
+            responsavel: resp || "Infralobo",
+            fatura: fatura || ""
+          });
+        }
+      });
+
+      return custos;
+    }
+
+    async function submitNewProject(e) {
+      e.preventDefault();
+      const btn = document.getElementById("create-project-btn");
+      const nomeInput = document.getElementById("input-nome-projeto");
+      const nomeProjeto = nomeInput.value.trim();
+
+      if (!nomeProjeto) return;
+
+      btn.disabled = true;
+      btn.innerHTML = `<span>A criar...</span>`;
+
+      try {
+        await fetch(API_URL, {
+          method: "POST",
+          mode: "no-cors",
+          headers: { "Content-Type": "text/plain;charset=utf-8" },
+          body: JSON.stringify({
+            action: "createProject",
+            projectName: nomeProjeto
+          })
+        });
+
+        closeProjectModal();
+        nomeInput.value = "";
+        setTimeout(() => loadProjects(nomeProjeto), 1500);
+
+      } catch (err) {
+        alert("Erro ao criar o novo projeto.");
+      } finally {
+        btn.disabled = false;
+        btn.innerHTML = `<span>Criar Projeto</span>`;
+      }
+    }
+
+    async function submitTask(e) {
+      e.preventDefault();
+      const submitBtn = document.getElementById("submit-btn");
+      submitBtn.disabled = true;
+      submitBtn.innerHTML = `<span>A guardar...</span>`;
+
+      const custosArray = collectCustosFromForm();
+
+      const taskData = {
+        projeto: currentProject || "Folha1",
+        rowIndex: document.getElementById("input-row-index").value,
+        fase: document.getElementById("input-fase").value,
+        tarefa: document.getElementById("input-tarefa").value,
+        progresso: document.getElementById("input-progresso").value,
+        urgencia: document.getElementById("input-urgencia").value,
+        responsabilidade: document.getElementById("input-responsabilidade").value,
+        instituicoes: document.getElementById("input-instituicoes").value,
+        notas: document.getElementById("input-notas").value,
+        fotos: document.getElementById("input-fotos").value,
+        custos: custosArray
+      };
+
+      try {
+        await fetch(API_URL, {
+          method: "POST",
+          mode: "no-cors",
+          headers: { "Content-Type": "text/plain;charset=utf-8" },
+          body: JSON.stringify(taskData)
+        });
+
+        closeModal();
+        document.getElementById("task-form").reset();
+        document.getElementById("cost-items-container").innerHTML = "";
+        setTimeout(fetchTasks, 1200);
+      } catch (err) {
+        alert("Erro ao guardar a tarefa.");
+      } finally {
+        submitBtn.disabled = false;
+        submitBtn.innerHTML = `<span id="submit-btn-text">Guardar Tarefa</span>`;
+      }
+    }
+
+    function closeModal() { document.getElementById("modal").classList.add("hidden"); }
+    function openProjectModal() { document.getElementById("project-modal").classList.remove("hidden"); }
+    function closeProjectModal() { document.getElementById("project-modal").classList.add("hidden"); }
+
+    // SCRIPT PARA REDIMENSIONAR COLUNAS (RESIZABLE COLUMNS)
+    function makeTableResizable(tableId) {
+      const table = document.getElementById(tableId);
+      if (!table) return;
+      const cols = table.querySelectorAll("th");
+
+      cols.forEach(col => {
+        if (col.querySelector(".resizer")) return;
+
+        const resizer = document.createElement("div");
+        resizer.className = "resizer";
+        col.appendChild(resizer);
+
+        let startX, startWidth;
+
+        resizer.addEventListener("mousedown", e => {
+          startX = e.pageX;
+          startWidth = col.offsetWidth;
+          resizer.classList.add("resizing");
+
+          const onMouseMove = e => {
+            const width = startWidth + (e.pageX - startX);
+            if (width > 50) {
+              col.style.width = `${width}px`;
+            }
+          };
+
+          const onMouseUp = () => {
+            resizer.classList.remove("resizing");
+            document.removeEventListener("mousemove", onMouseMove);
+            document.removeEventListener("mouseup", onMouseUp);
+          };
+
+          document.addEventListener("mousemove", onMouseMove);
+          document.addEventListener("mouseup", onMouseUp);
+        });
+      });
+    }
+
+    // Inicialização
+    loadProjects().then(() => {
+      makeTableResizable("resizable-table");
+    });
+  </script>
+</body>
+</html>
