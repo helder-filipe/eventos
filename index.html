@@ -8,27 +8,19 @@
   <script src="https://cdn.tailwindcss.com"></script>
   <!-- Google Fonts -->
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+  <link rel="icon" type="image/png" href="projeto.png">
   <style>
     body { font-family: 'Inter', sans-serif; }
     ::-webkit-scrollbar { width: 6px; height: 6px; }
     ::-webkit-scrollbar-track { background: #f1f5f9; }
     ::-webkit-scrollbar-thumb { background: #cbd5e1; border-radius: 4px; }
 
-    /* Estilos para o redimensionamento de colunas */
     th { position: relative; }
     .resizer {
-      position: absolute;
-      right: 0;
-      top: 0;
-      height: 100%;
-      width: 5px;
-      background: rgba(226, 232, 240, 0.6);
-      cursor: col-resize;
-      user-select: none;
+      position: absolute; right: 0; top: 0; height: 100%; width: 5px;
+      background: rgba(226, 232, 240, 0.6); cursor: col-resize; user-select: none;
     }
-    .resizer:hover, .resizing {
-      background: #059669;
-    }
+    .resizer:hover, .resizing { background: #059669; }
   </style>
 </head>
 <body class="bg-slate-50 text-slate-800 min-h-screen flex flex-col">
@@ -42,18 +34,22 @@
           <span class="text-2xl">📁</span>
           <h1 class="text-xl sm:text-2xl font-bold tracking-tight">Plataforma de Projetos</h1>
         </div>
-        <p class="text-emerald-200 text-xs mt-0.5">Gestão de Ações e Controlo Orçamental</p>
+        <p class="text-emerald-200 text-xs mt-0.5">Gestão de Ações, Cronograma & Gantt</p>
       </div>
 
-      <!-- Controlos de Projeto e Nova Tarefa -->
       <div class="flex flex-col sm:flex-row items-stretch sm:items-center gap-3 w-full lg:w-auto">
         <div class="flex items-center gap-2 bg-emerald-900/60 p-1.5 rounded-lg border border-emerald-700/50">
           <label for="project-select" class="text-xs font-semibold text-emerald-200 uppercase px-1 whitespace-nowrap">Projeto:</label>
           <select id="project-select" onchange="changeProject(this.value)" class="bg-white text-slate-800 text-sm font-semibold rounded-md px-3 py-1.5 focus:outline-none focus:ring-2 focus:ring-emerald-400 cursor-pointer w-full sm:w-auto">
             <option value="">A carregar...</option>
           </select>
-          <button onclick="openProjectModal()" title="Criar novo projeto" class="bg-emerald-700 hover:bg-emerald-600 text-white p-1.5 rounded-md text-xs font-semibold flex items-center gap-1 transition px-2.5 whitespace-nowrap">
-            <span>+ Novo Projeto</span>
+          
+          <button onclick="openProjectModal()" title="Criar novo projeto do zero" class="bg-emerald-700 hover:bg-emerald-600 text-white p-1.5 rounded-md text-xs font-semibold transition px-2.5 whitespace-nowrap">
+            + Novo
+          </button>
+
+          <button onclick="openDuplicateModal()" title="Replicar a estrutura deste projeto" class="bg-amber-600 hover:bg-amber-500 text-white p-1.5 rounded-md text-xs font-semibold transition px-2.5 whitespace-nowrap">
+            📋 Replicar Projeto
           </button>
         </div>
 
@@ -71,7 +67,7 @@
   <!-- Main Container -->
   <main class="max-w-[98vw] mx-auto px-2 sm:px-4 py-6 flex-grow w-full">
 
-    <!-- Dashboard KPI Cards (Clicáveis para filtrar estado!) -->
+    <!-- Dashboard KPI Cards -->
     <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 mb-4">
       <div id="kpi-card-all" onclick="setKpiFilter('todos')" class="bg-white p-4 rounded-xl shadow-sm border-2 border-emerald-500 hover:border-emerald-600 cursor-pointer transition flex items-center justify-between group">
         <div>
@@ -107,10 +103,48 @@
       </div>
     </div>
 
-    <!-- Data Table Card + Filtros Combinados -->
+    <!-- CENTRO DE APRENDIZAGEM -->
+    <div class="bg-white rounded-xl shadow-sm border border-slate-200/80 p-4 mb-4">
+      <div class="flex justify-between items-center cursor-pointer" onclick="toggleLearningCenter()">
+        <div class="flex items-center gap-2">
+          <span class="text-lg">💡</span>
+          <h3 class="font-bold text-slate-700 text-sm">Centro de Aprendizagem & Dicas de Melhoria do Projeto</h3>
+        </div>
+        <button id="learning-toggle-icon" class="text-slate-400 hover:text-slate-600 font-bold text-xs">▼ Expandir</button>
+      </div>
+
+      <div id="learning-center-content" class="hidden mt-3 pt-3 border-t border-slate-100 space-y-2">
+        <textarea id="project-learning-notes" rows="2" placeholder="Notas sobre imprevistos, fornecedores, logística a melhorar na próxima edição..." class="w-full border border-slate-300 rounded-lg p-2.5 text-xs focus:ring-2 focus:ring-emerald-500 outline-none resize-y"></textarea>
+        <div class="flex justify-end">
+          <button onclick="saveProjectNotes()" id="save-notes-btn" class="bg-slate-800 hover:bg-slate-700 text-white text-xs font-semibold px-3 py-1.5 rounded-lg transition">
+            💾 Guardar Aprendizagens
+          </button>
+        </div>
+      </div>
+    </div>
+
+    <!-- PAINEL DO GRÁFICO DE GANTT (COM EIXO DE MESES) -->
+    <div class="bg-white rounded-xl shadow-sm border border-slate-200/80 p-4 mb-4">
+      <div class="flex justify-between items-center cursor-pointer" onclick="toggleGantt()">
+        <div class="flex items-center gap-2">
+          <span class="text-lg">📊</span>
+          <h3 class="font-bold text-slate-700 text-sm">Gráfico de Gantt do Cronograma</h3>
+          <span class="text-[10px] bg-indigo-100 text-indigo-800 font-semibold px-2 py-0.5 rounded-full">Visualização Temporal por Meses</span>
+        </div>
+        <button id="gantt-toggle-icon" class="text-slate-400 hover:text-slate-600 font-bold text-xs">▼ Expandir</button>
+      </div>
+
+      <div id="gantt-content" class="hidden mt-4 pt-3 border-t border-slate-100">
+        <div id="gantt-chart-container" class="overflow-x-auto min-h-[150px]">
+          <!-- O gráfico de Gantt com eixo de meses é gerado aqui via JS -->
+        </div>
+      </div>
+    </div>
+
+    <!-- Data Table Card + Filtros -->
     <div class="bg-white rounded-xl shadow-sm border border-slate-200/80 overflow-hidden">
       
-      <!-- Toolbar de Filtros Avançados -->
+      <!-- Toolbar de Filtros -->
       <div class="p-3 border-b border-slate-200 bg-slate-50/80 space-y-3">
         <div class="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-3">
           <div class="flex items-center gap-2">
@@ -129,7 +163,7 @@
           </div>
         </div>
 
-        <!-- Linha com os Filtros Específicos -->
+        <!-- Filtros Dropdowns -->
         <div class="grid grid-cols-2 sm:grid-cols-4 lg:grid-cols-5 gap-2 pt-2 border-t border-slate-200/60 text-xs">
           <div>
             <label class="block text-[10px] font-bold text-slate-500 uppercase mb-0.5">Fase:</label>
@@ -167,32 +201,34 @@
 
           <div class="col-span-2 sm:col-span-4 lg:col-span-1 flex items-end">
             <button onclick="resetFilters()" class="w-full bg-slate-200 hover:bg-slate-300 text-slate-700 font-medium p-1.5 rounded transition text-xs flex items-center justify-center gap-1">
-              <span>🧹 Limpar Filtros</span>
+              🧹 Limpar Filtros
             </button>
           </div>
         </div>
       </div>
 
-      <!-- Table View com Colunas Redimensionáveis -->
+      <!-- Table View -->
       <div class="w-full overflow-x-auto">
         <table id="resizable-table" class="w-full text-left border-collapse table-fixed">
           <thead>
             <tr class="bg-slate-100/80 text-slate-600 text-[11px] font-semibold uppercase tracking-wider border-b border-slate-200">
-              <th style="width: 110px;" class="py-2.5 px-2">Fase</th>
-              <th style="width: 260px;" class="py-2.5 px-2">Tarefa</th>
-              <th style="width: 110px;" class="py-2.5 px-2">Progresso</th>
-              <th style="width: 140px;" class="py-2.5 px-2">Resp.</th>
-              <th style="width: 180px;" class="py-2.5 px-2">Instituições / Contactos</th>
-              <th style="width: 120px;" class="py-2.5 px-2">Urgência</th>
-              <th style="width: 180px;" class="py-2.5 px-2">Custos</th>
-              <th style="width: 220px;" class="py-2.5 px-2">Notas</th>
-              <th style="width: 80px;" class="py-2.5 px-2 text-center">Fotos</th>
-              <th style="width: 90px;" class="py-2.5 px-2 text-center">Ações</th>
+              <th style="width: 100px;" class="py-2.5 px-2">Fase</th>
+              <th style="width: 220px;" class="py-2.5 px-2">Tarefa</th>
+              <th style="width: 100px;" class="py-2.5 px-2">Progresso</th>
+              <th style="width: 130px;" class="py-2.5 px-2">Responsabilidade</th>
+              <th style="width: 160px;" class="py-2.5 px-2">Instituições / Contactos</th>
+              <th style="width: 110px;" class="py-2.5 px-2">Urgência / Importância</th>
+              <th style="width: 110px;" class="py-2.5 px-2">Data de início</th>
+              <th style="width: 110px;" class="py-2.5 px-2">Data de fim</th>
+              <th style="width: 160px;" class="py-2.5 px-2">Custos</th>
+              <th style="width: 180px;" class="py-2.5 px-2">Notas</th>
+              <th style="width: 70px;" class="py-2.5 px-2 text-center">Fotos</th>
+              <th style="width: 80px;" class="py-2.5 px-2 text-center">Ações</th>
             </tr>
           </thead>
           <tbody id="task-list" class="divide-y divide-slate-100 text-xs">
             <tr>
-              <td colspan="10" class="text-center p-12 text-slate-400">
+              <td colspan="12" class="text-center p-12 text-slate-400">
                 <div class="inline-block animate-spin rounded-full h-8 w-8 border-4 border-slate-200 border-t-emerald-600 mb-2"></div>
                 <p>A carregar dados...</p>
               </td>
@@ -207,30 +243,48 @@
   <div id="project-modal" class="fixed inset-0 bg-slate-900/50 backdrop-blur-sm hidden flex items-center justify-center p-4 z-50">
     <div class="bg-white rounded-2xl shadow-2xl w-full max-w-md overflow-hidden">
       <div class="bg-slate-50 px-6 py-4 border-b border-slate-200 flex justify-between items-center">
-        <h3 class="text-base font-bold text-slate-800 flex items-center gap-2">
-          <span>📁</span> Criar Novo Projeto
-        </h3>
+        <h3 class="text-base font-bold text-slate-800 flex items-center gap-2">📁 Criar Novo Projeto</h3>
         <button onclick="closeProjectModal()" class="text-slate-400 hover:text-slate-600 text-xl font-bold p-1 rounded-lg">&times;</button>
       </div>
-
       <form onsubmit="submitNewProject(event)" class="p-6 space-y-4">
         <div>
-          <label class="block text-xs font-semibold text-slate-600 uppercase tracking-wider mb-1">Nome do Projeto / Evento *</label>
+          <label class="block text-xs font-semibold text-slate-600 uppercase tracking-wider mb-1">Nome do Projeto *</label>
           <input type="text" id="input-nome-projeto" required placeholder="Ex: Feira do Livro 2026" class="w-full border border-slate-300 rounded-lg p-2.5 text-sm focus:ring-2 focus:ring-emerald-500 outline-none">
-          <p class="text-xs text-slate-400 mt-1">Irá criar uma nova aba no Google Sheets com este nome.</p>
         </div>
-
         <div class="flex justify-end gap-3 pt-4 border-t border-slate-100">
           <button type="button" onclick="closeProjectModal()" class="px-4 py-2.5 border border-slate-300 text-slate-600 rounded-lg text-sm font-medium hover:bg-slate-100">Cancelar</button>
-          <button type="submit" id="create-project-btn" class="px-5 py-2.5 bg-emerald-700 hover:bg-emerald-600 text-white rounded-lg text-sm font-medium shadow-sm">
-            <span>Criar Projeto</span>
-          </button>
+          <button type="submit" id="create-project-btn" class="px-5 py-2.5 bg-emerald-700 hover:bg-emerald-600 text-white rounded-lg text-sm font-medium shadow-sm">Criar Projeto</button>
         </div>
       </form>
     </div>
   </div>
 
-  <!-- MODAL 2: Criar / Editar Tarefa -->
+  <!-- MODAL DUPLICAR PROJETO -->
+  <div id="duplicate-modal" class="fixed inset-0 bg-slate-900/50 backdrop-blur-sm hidden flex items-center justify-center p-4 z-50">
+    <div class="bg-white rounded-2xl shadow-2xl w-full max-w-md overflow-hidden">
+      <div class="bg-amber-500 text-white px-6 py-4 flex justify-between items-center">
+        <h3 class="text-base font-bold flex items-center gap-2">📋 Replicar Projeto Reutilizável</h3>
+        <button onclick="closeDuplicateModal()" class="text-amber-100 hover:text-white text-xl font-bold p-1 rounded-lg">&times;</button>
+      </div>
+      <form onsubmit="submitDuplicateProject(event)" class="p-6 space-y-4">
+        <div>
+          <p class="text-xs text-slate-600 mb-3 leading-relaxed">
+            Irá copiar as tarefas de <strong id="dup-source-name" class="text-amber-700"></strong> mantendo: <strong>Fase, Nome da Tarefa, Responsabilidade, Instituições e Urgência</strong>.
+            <br><br>
+            As datas, custos e fotos serão limpos para a nova edição.
+          </p>
+          <label class="block text-xs font-semibold text-slate-600 uppercase tracking-wider mb-1">Nome da Nova Edição *</label>
+          <input type="text" id="input-nome-duplicado" required placeholder="Ex: Limpeza de Praia 2027" class="w-full border border-slate-300 rounded-lg p-2.5 text-sm focus:ring-2 focus:ring-amber-500 outline-none">
+        </div>
+        <div class="flex justify-end gap-3 pt-4 border-t border-slate-100">
+          <button type="button" onclick="closeDuplicateModal()" class="px-4 py-2.5 border border-slate-300 text-slate-600 rounded-lg text-sm font-medium hover:bg-slate-100">Cancelar</button>
+          <button type="submit" id="duplicate-project-btn" class="px-5 py-2.5 bg-amber-600 hover:bg-amber-500 text-white rounded-lg text-sm font-medium shadow-sm">Criar Réplica</button>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  <!-- MODAL TAREFA (Criar / Editar) -->
   <div id="modal" class="fixed inset-0 bg-slate-900/50 backdrop-blur-sm hidden flex items-center justify-center p-4 z-50 overflow-y-auto">
     <div class="bg-white rounded-2xl shadow-2xl w-full max-w-2xl my-8 overflow-hidden">
       
@@ -271,8 +325,20 @@
 
         <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
           <div>
+            <label class="block text-xs font-semibold text-slate-600 uppercase tracking-wider mb-1">Responsabilidade Geral</label>
+            <input type="text" id="input-responsabilidade" placeholder="Ex: Infralobo / Parceiro" class="w-full border border-slate-300 rounded-lg p-2.5 text-sm focus:ring-2 focus:ring-emerald-500 outline-none">
+          </div>
+
+          <div>
+            <label class="block text-xs font-semibold text-slate-600 uppercase tracking-wider mb-1">Instituições / Contactos</label>
+            <input type="text" id="input-instituicoes" placeholder="Ex: Capitania, Escolas" class="w-full border border-slate-300 rounded-lg p-2.5 text-sm focus:ring-2 focus:ring-emerald-500 outline-none">
+          </div>
+        </div>
+
+        <div class="grid grid-cols-1 sm:grid-cols-3 gap-3 border border-slate-200 rounded-xl p-3 bg-slate-50/50">
+          <div>
             <label class="block text-xs font-semibold text-slate-600 uppercase tracking-wider mb-1">Urgência / Importância</label>
-            <select id="input-urgencia" class="w-full border border-slate-300 rounded-lg p-2.5 text-sm focus:ring-2 focus:ring-emerald-500 outline-none bg-white">
+            <select id="input-urgencia" class="w-full border border-slate-300 rounded-lg p-2 text-xs focus:ring-2 focus:ring-emerald-500 outline-none bg-white">
               <option value="Importante">Importante</option>
               <option value="Importante e Urgente">Importante e Urgente</option>
               <option value="Normal" selected>Normal</option>
@@ -280,27 +346,21 @@
           </div>
 
           <div>
-            <label class="block text-xs font-semibold text-slate-600 uppercase tracking-wider mb-1">Responsabilidade Geral</label>
-            <input type="text" id="input-responsabilidade" placeholder="Ex: Infralobo / Parceiro" class="w-full border border-slate-300 rounded-lg p-2.5 text-sm focus:ring-2 focus:ring-emerald-500 outline-none">
+            <label class="block text-xs font-semibold text-slate-600 uppercase tracking-wider mb-1">Data de início</label>
+            <input type="date" id="input-data-inicio" class="w-full border border-slate-300 rounded-lg p-2 text-xs focus:ring-2 focus:ring-emerald-500 outline-none bg-white">
+          </div>
+
+          <div>
+            <label class="block text-xs font-semibold text-slate-600 uppercase tracking-wider mb-1">Data de fim</label>
+            <input type="date" id="input-data-fim" class="w-full border border-slate-300 rounded-lg p-2 text-xs focus:ring-2 focus:ring-emerald-500 outline-none bg-white">
           </div>
         </div>
 
-        <div>
-          <label class="block text-xs font-semibold text-slate-600 uppercase tracking-wider mb-1">Instituições / Contactos</label>
-          <input type="text" id="input-instituicoes" placeholder="Ex: Capitania, Escolas" class="w-full border border-slate-300 rounded-lg p-2.5 text-sm focus:ring-2 focus:ring-emerald-500 outline-none">
-        </div>
-
-        <!-- SEÇÃO DE CUSTOS MULTI-ITEM -->
         <div class="border border-slate-200 rounded-xl p-4 bg-slate-50/70 space-y-3">
           <div class="flex justify-between items-center">
-            <label class="text-xs font-bold text-slate-700 uppercase tracking-wider flex items-center gap-1.5">
-              <span>💶</span> Custos Associados à Tarefa
-            </label>
-            <button type="button" onclick="addCostRow()" class="text-xs bg-emerald-100 hover:bg-emerald-200 text-emerald-800 font-semibold px-2.5 py-1 rounded-md transition flex items-center gap-1">
-              <span>+ Adicionar Custo</span>
-            </button>
+            <label class="text-xs font-bold text-slate-700 uppercase tracking-wider flex items-center gap-1.5">💶 Custos Associados à Tarefa</label>
+            <button type="button" onclick="addCostRow()" class="text-xs bg-emerald-100 hover:bg-emerald-200 text-emerald-800 font-semibold px-2.5 py-1 rounded-md transition">+ Adicionar Custo</button>
           </div>
-
           <div id="cost-items-container" class="space-y-2.5"></div>
         </div>
 
@@ -330,7 +390,27 @@
 
     let currentProject = "";
     let rawTasksData = [];
-    let selectedKpiFilter = "todos"; // "todos", "Concluído", "pendentes"
+    let selectedKpiFilter = "todos";
+
+    // Função Auxiliar para Formatar Data YYYY-MM-DD em DD-MM-AAAA
+    function formatDateToPT(dateStr) {
+      if (!dateStr || typeof dateStr !== "string") return "-";
+      const cleanStr = dateStr.trim();
+      if (cleanStr.includes("T")) {
+        const d = new Date(cleanStr);
+        if (!isNaN(d.getTime())) {
+          const day = String(d.getDate()).padStart(2, '0');
+          const month = String(d.getMonth() + 1).padStart(2, '0');
+          const year = d.getFullYear();
+          return `${day}-${month}-${year}`;
+        }
+      }
+      const parts = cleanStr.split("-");
+      if (parts.length === 3 && parts[0].length === 4) {
+        return `${parts[2]}-${parts[1]}-${parts[0]}`;
+      }
+      return cleanStr;
+    }
 
     async function loadProjects(selectProjectName = null) {
       const select = document.getElementById("project-select");
@@ -344,8 +424,7 @@
         if (Array.isArray(projects) && projects.length > 0) {
           projects.forEach(p => {
             const opt = document.createElement("option");
-            opt.value = p;
-            opt.innerText = p;
+            opt.value = p; opt.innerText = p;
             select.appendChild(opt);
           });
           currentProject = selectProjectName && projects.includes(selectProjectName) ? selectProjectName : projects[0];
@@ -355,7 +434,6 @@
           currentProject = "Folha1";
         }
       } catch (err) {
-        console.warn("Aviso ao carregar lista de projetos:", err);
         select.innerHTML = '<option value="Folha1">Folha1</option>';
         currentProject = "Folha1";
       }
@@ -374,6 +452,7 @@
     function updateUIProjectName() {
       document.getElementById("current-project-title").innerText = `Lista de Ações — ${currentProject}`;
       document.getElementById("modal-project-name").innerText = currentProject;
+      document.getElementById("dup-source-name").innerText = currentProject;
     }
 
     async function fetchTasks() {
@@ -383,7 +462,7 @@
 
       tbody.innerHTML = `
         <tr>
-          <td colspan="10" class="text-center p-12 text-slate-400">
+          <td colspan="12" class="text-center p-12 text-slate-400">
             <div class="inline-block animate-spin rounded-full h-7 w-7 border-4 border-slate-200 border-t-emerald-600 mb-2"></div>
             <p>A carregar tarefas de <strong>${currentProject || "projeto"}</strong>...</p>
           </td>
@@ -393,22 +472,18 @@
       try {
         const fetchUrl = `${API_URL}?project=${encodeURIComponent(currentProject)}`;
         const response = await fetch(fetchUrl, { method: "GET", redirect: "follow" });
-        const data = await response.json();
+        const resObj = await response.json();
 
-        rawTasksData = Array.isArray(data) ? data : [];
+        rawTasksData = Array.isArray(resObj.tasks) ? resObj.tasks : (Array.isArray(resObj) ? resObj : []);
+        document.getElementById("project-learning-notes").value = resObj.projectNotes || "";
+
         populateFilterDropdowns(rawTasksData);
         applyAllFilters();
         updateKPIs(rawTasksData);
+        renderGanttChart(rawTasksData);
 
       } catch (error) {
-        console.error("Erro ao carregar tarefas:", error);
-        tbody.innerHTML = `
-          <tr>
-            <td colspan="10" class="text-center p-8 text-red-500 bg-red-50/50">
-              ⚠️ Não foi possível carregar as tarefas. Certifica-te de que colocaste o URL correto do Apps Script.
-            </td>
-          </tr>
-        `;
+        tbody.innerHTML = `<tr><td colspan="12" class="text-center p-8 text-red-500 bg-red-50/50">⚠️ Erro ao carregar tarefas.</td></tr>`;
       } finally {
         if (refreshIcon) refreshIcon.classList.remove("animate-spin");
       }
@@ -417,14 +492,12 @@
     function populateFilterDropdowns(data) {
       const respSelect = document.getElementById("filter-resp");
       const instSelect = document.getElementById("filter-inst");
-
       const resps = new Set();
       const insts = new Set();
 
       data.forEach(item => {
         const r = item.Responsabilidade || item.responsabilidade;
         if (r && r.trim()) resps.add(r.trim());
-
         const i = item["Instituições / Contactos"] || item["Instituições/ empresas a contactar"] || item.instituicoes;
         if (i && i.trim()) insts.add(i.trim());
       });
@@ -436,7 +509,6 @@
       insts.forEach(i => instSelect.innerHTML += `<option value="${i}">${i}</option>`);
     }
 
-    // APLICAR TODOS OS FILTROS COMBINADOS (KPI + DROP DOWNS + PESQUISA)
     function applyAllFilters() {
       const search = document.getElementById("search-input").value.toLowerCase();
       const fase = document.getElementById("filter-fase").value;
@@ -446,34 +518,25 @@
 
       const filtered = rawTasksData.filter(item => {
         const progresso = item.Progresso || item.progresso || "Pendente";
-        
-        // 1. Filtro KPI Estado
         if (selectedKpiFilter === "Concluído" && progresso !== "Concluído") return false;
         if (selectedKpiFilter === "pendentes" && progresso === "Concluído") return false;
 
-        // 2. Filtro Fase
         const faseVal = item.Fase || item.fase || "Pré-evento";
         if (fase && faseVal !== fase) return false;
 
-        // 3. Filtro Resp
         const respVal = item.Responsabilidade || item.responsabilidade || "";
         if (resp && respVal !== resp) return false;
 
-        // 4. Filtro Inst
         const instVal = item["Instituições / Contactos"] || item["Instituições/ empresas a contactar"] || item.instituicoes || "";
         if (inst && instVal !== inst) return false;
 
-        // 5. Filtro Urgência
         const urgVal = item["Urgência / Importância"] || item["Urgência/ Importância"] || item.urgencia || "Normal";
         if (urgencia && !urgVal.includes(urgencia)) return false;
 
-        // 6. Texto Livre
         if (search) {
           const t = (item.Tarefa || item.tarefa || "").toLowerCase();
           const n = (item.Notas || item.notas || "").toLowerCase();
-          const r = respVal.toLowerCase();
-          const i = instVal.toLowerCase();
-          if (!t.includes(search) && !n.includes(search) && !r.includes(search) && !i.includes(search)) return false;
+          if (!t.includes(search) && !n.includes(search) && !respVal.toLowerCase().includes(search) && !instVal.toLowerCase().includes(search)) return false;
         }
 
         return true;
@@ -484,8 +547,6 @@
 
     function setKpiFilter(filter) {
       selectedKpiFilter = filter;
-
-      // Atualizar Estilos dos Cartões KPI
       const cardAll = document.getElementById("kpi-card-all");
       const cardComp = document.getElementById("kpi-card-completed");
       const cardPend = document.getElementById("kpi-card-pending");
@@ -514,14 +575,15 @@
       tbody.innerHTML = "";
 
       if (!data || data.length === 0) {
-        tbody.innerHTML = `<tr><td colspan="10" class="text-center p-8 text-slate-400">Nenhuma tarefa encontrada com os filtros selecionados.</td></tr>`;
+        tbody.innerHTML = `<tr><td colspan="12" class="text-center p-8 text-slate-400">Nenhuma tarefa encontrada com os filtros selecionados.</td></tr>`;
         return;
       }
 
-      data.forEach((item, index) => {
+      data.forEach((item) => {
         const row = document.createElement("tr");
         row.className = "hover:bg-slate-50/80 transition border-b border-slate-100";
 
+        // 1. Fase
         const faseVal = item.Fase || item.fase || "Pré-evento";
         let phaseBadge = '<span class="px-1.5 py-0.5 rounded text-[10px] font-semibold bg-slate-100 text-slate-700 whitespace-nowrap">Pré-evento</span>';
         if (faseVal === "Evento") {
@@ -530,8 +592,10 @@
           phaseBadge = '<span class="px-1.5 py-0.5 rounded text-[10px] font-semibold bg-purple-100 text-purple-700 whitespace-nowrap">Pós-evento</span>';
         }
 
+        // 2. Tarefa
         const tarefaVal = item.Tarefa || item.tarefa || "-";
 
+        // 3. Progresso
         const progressoVal = item.Progresso || item.progresso || "Pendente";
         let progressBadge = '<span class="px-2 py-0.5 rounded-full text-[10px] font-medium bg-slate-100 text-slate-600 whitespace-nowrap">Pendente</span>';
         if (progressoVal === "Concluído") {
@@ -540,9 +604,13 @@
           progressBadge = '<span class="px-2 py-0.5 rounded-full text-[10px] font-medium bg-amber-100 text-amber-800 border border-amber-200 whitespace-nowrap">Em Curso</span>';
         }
 
+        // 4. Responsabilidade
         const respVal = item.Responsabilidade || item.responsabilidade || "-";
+
+        // 5. Instituições / Contactos
         const instVal = item["Instituições / Contactos"] || item["Instituições/ empresas a contactar"] || item.instituicoes || "-";
 
+        // 6. Urgência / Importância
         const urgenciaVal = item["Urgência / Importância"] || item["Urgência/ Importância"] || item.urgencia || "Normal";
         let urgencyBadge = '<span class="text-slate-500 text-[11px]">Normal</span>';
         if (String(urgenciaVal).includes("Urgente")) {
@@ -551,11 +619,19 @@
           urgencyBadge = '<span class="px-1.5 py-0.5 rounded text-[10px] font-semibold bg-blue-100 text-blue-700 border border-blue-200 whitespace-nowrap">Importante</span>';
         }
 
+        // 7. Data de início (Formatada dd-mm-aaaa)
+        const dInicioRaw = item["Data de início"] || item["Data Início"] || item.dataInicio || "";
+        const dInicioFormatted = formatDateToPT(dInicioRaw);
+
+        // 8. Data de fim (Formatada dd-mm-aaaa)
+        const dFimRaw = item["Data de fim"] || item["Data Fim"] || item.dataFim || "";
+        const dFimFormatted = formatDateToPT(dFimRaw);
+
+        // 9. Custos
         const custosLista = parseCustos(item.Custos || item.custos);
         let custosCell = '<span class="text-slate-300 text-[11px]">-</span>';
         if (custosLista.length > 0) {
           const totalTarefa = custosLista.reduce((acc, c) => acc + (parseFloat(c.valor) || 0), 0);
-          
           let detalhesHtml = custosLista.map(c => {
             const faturaLink = c.fatura ? `<a href="${c.fatura}" target="_blank" class="text-blue-600 hover:underline">📄 Fat.</a>` : '';
             return `<div class="text-[10px] text-slate-600 flex justify-between gap-1 border-b border-slate-100 py-0.5">
@@ -564,16 +640,13 @@
             </div>`;
           }).join('');
 
-          custosCell = `
-            <div>
-              <span class="font-bold text-slate-800 text-[11px]">${totalTarefa.toFixed(2)} €</span>
-              <div class="mt-0.5 bg-slate-50 p-1 rounded border border-slate-200/60">${detalhesHtml}</div>
-            </div>
-          `;
+          custosCell = `<div><span class="font-bold text-slate-800 text-[11px]">${totalTarefa.toFixed(2)} €</span><div class="mt-0.5 bg-slate-50 p-1 rounded border border-slate-200/60">${detalhesHtml}</div></div>`;
         }
 
+        // 10. Notas
         const notasVal = item.Notas || item.notas || "-";
 
+        // 11. Fotos
         const fotoUrl = item.Fotos || item.fotos || "";
         let photosCell = '<span class="text-slate-300">-</span>';
         if (fotoUrl && String(fotoUrl).trim().startsWith("http")) {
@@ -582,6 +655,7 @@
           photosCell = `<span class="text-[10px] text-slate-400 italic" title="${fotoUrl}">Local</span>`;
         }
 
+        // 12. Ações
         const realIndex = rawTasksData.indexOf(item);
         const editBtn = `<button onclick="editTask(${realIndex})" class="bg-slate-100 hover:bg-emerald-50 text-slate-600 hover:text-emerald-700 border border-slate-200 rounded px-2 py-1 text-[11px] font-medium transition flex items-center gap-1 mx-auto whitespace-nowrap">✏️ Editar</button>`;
 
@@ -592,6 +666,8 @@
           <td class="p-2.5 text-slate-600 leading-tight break-words">${respVal}</td>
           <td class="p-2.5 text-slate-600 leading-tight break-words">${instVal}</td>
           <td class="p-2.5 overflow-hidden">${urgencyBadge}</td>
+          <td class="p-2.5 text-slate-600 font-medium whitespace-nowrap">${dInicioFormatted}</td>
+          <td class="p-2.5 text-slate-600 font-medium whitespace-nowrap">${dFimFormatted}</td>
           <td class="p-2.5 overflow-hidden">${custosCell}</td>
           <td class="p-2.5 text-slate-500 text-[11px] leading-tight break-words">${notasVal}</td>
           <td class="p-2.5 text-center overflow-hidden">${photosCell}</td>
@@ -599,6 +675,150 @@
         `;
         tbody.appendChild(row);
       });
+    }
+
+    // DESENHAR GRÁFICO DE GANTT COM EIXO TEMPORAL DE MESES
+    function renderGanttChart(data) {
+      const container = document.getElementById("gantt-chart-container");
+      
+      const tasksWithDates = data.filter(d => 
+        (d["Data de início"] || d["Data Início"] || d.dataInicio) || 
+        (d["Data de fim"] || d["Data Fim"] || d.dataFim)
+      );
+
+      if (tasksWithDates.length === 0) {
+        container.innerHTML = `<div class="p-6 text-center text-slate-400 text-xs">Sem tarefas com datas definidas para gerar o Gráfico de Gantt. Edita uma tarefa e adiciona a Data de início/fim.</div>`;
+        return;
+      }
+
+      let minTimestamp = Infinity;
+      let maxTimestamp = -Infinity;
+
+      tasksWithDates.forEach(t => {
+        const startStr = t["Data de início"] || t["Data Início"] || t.dataInicio || t["Data de fim"] || t["Data Fim"] || t.dataFim;
+        const endStr = t["Data de fim"] || t["Data Fim"] || t.dataFim || startStr;
+
+        const start = new Date(startStr).getTime();
+        const end = new Date(endStr).getTime();
+
+        if (start < minTimestamp) minTimestamp = start;
+        if (end > maxTimestamp) maxTimestamp = end;
+      });
+
+      // Ajusta margens do início e fim do projeto
+      minTimestamp -= 86400000 * 2;
+      maxTimestamp += 86400000 * 2;
+      const totalDuration = maxTimestamp - minTimestamp;
+
+      // Gerar a lista de meses no intervalo de tempo
+      const monthNames = ["Jan", "Fev", "Mar", "Abr", "Mai", "Jun", "Jul", "Ago", "Set", "Out", "Nov", "Dez"];
+      let monthsTicks = [];
+
+      let currentDate = new Date(minTimestamp);
+      currentDate.setDate(1); // Primeiro dia do mês inicial
+
+      while (currentDate.getTime() <= maxTimestamp) {
+        const mTime = currentDate.getTime();
+        if (mTime >= minTimestamp && mTime <= maxTimestamp) {
+          const pct = ((mTime - minTimestamp) / totalDuration) * 100;
+          monthsTicks.push({
+            label: `${monthNames[currentDate.getMonth()]} ${currentDate.getFullYear()}`,
+            pct: pct
+          });
+        }
+        currentDate.setMonth(currentDate.getMonth() + 1);
+      }
+
+      let html = `<div class="space-y-3 min-w-[750px] text-xs">`;
+
+      // Eixo dos Meses (Topo do Gantt)
+      html += `
+        <div class="flex items-center gap-2 mb-2 border-b border-slate-200 pb-2">
+          <div class="w-48 font-bold text-slate-500 text-right pr-2">Linha do Tempo:</div>
+          <div class="flex-grow relative h-5 text-[10px] font-semibold text-slate-400">
+      `;
+      monthsTicks.forEach(m => {
+        html += `<span class="absolute transform -translate-x-1/2" style="left: ${m.pct}%;">${m.label}</span>`;
+      });
+      html += `</div></div>`;
+
+      // Barras de Gantt
+      tasksWithDates.forEach(t => {
+        const tName = t.Tarefa || t.tarefa || "Sem nome";
+        const startStr = t["Data de início"] || t["Data Início"] || t.dataInicio;
+        const endStr = t["Data de fim"] || t["Data Fim"] || t.dataFim;
+
+        const start = startStr ? new Date(startStr).getTime() : minTimestamp;
+        const end = endStr ? new Date(endStr).getTime() : start;
+        const prog = t.Progresso || t.progresso || "Pendente";
+
+        const leftPercent = Math.max(0, ((start - minTimestamp) / totalDuration) * 100);
+        const widthPercent = Math.max(2, (((end - start) + 86400000) / totalDuration) * 100);
+
+        let colorBg = "bg-slate-400";
+        if (prog === "Concluído") colorBg = "bg-emerald-600";
+        else if (prog === "Em Curso") colorBg = "bg-amber-500";
+
+        html += `
+          <div class="flex items-center gap-2">
+            <div class="w-48 truncate font-medium text-slate-700 text-right pr-2" title="${tName}">${tName}</div>
+            <div class="flex-grow bg-slate-100 rounded-full h-5 relative overflow-hidden border border-slate-200">
+              <div class="${colorBg} h-full rounded-full transition-all flex items-center px-2 text-[9px] text-white font-bold" style="margin-left: ${leftPercent}%; width: ${widthPercent}%;">
+                ${prog === "Concluído" ? '✓' : ''}
+              </div>
+            </div>
+          </div>
+        `;
+      });
+
+      html += `</div>`;
+      container.innerHTML = html;
+    }
+
+    function toggleGantt() {
+      const content = document.getElementById("gantt-content");
+      const icon = document.getElementById("gantt-toggle-icon");
+      if (content.classList.contains("hidden")) {
+        content.classList.remove("hidden");
+        icon.innerText = "▲ Recolher";
+      } else {
+        content.classList.add("hidden");
+        icon.innerText = "▼ Expandir";
+      }
+    }
+
+    function toggleLearningCenter() {
+      const content = document.getElementById("learning-center-content");
+      const icon = document.getElementById("learning-toggle-icon");
+      if (content.classList.contains("hidden")) {
+        content.classList.remove("hidden");
+        icon.innerText = "▲ Recolher";
+      } else {
+        content.classList.add("hidden");
+        icon.innerText = "▼ Expandir";
+      }
+    }
+
+    async function saveProjectNotes() {
+      const btn = document.getElementById("save-notes-btn");
+      const notes = document.getElementById("project-learning-notes").value;
+      btn.disabled = true;
+      btn.innerHTML = `<span>A guardar...</span>`;
+
+      try {
+        await fetch(API_URL, {
+          method: "POST",
+          mode: "no-cors",
+          headers: { "Content-Type": "text/plain;charset=utf-8" },
+          body: JSON.stringify({ action: "saveProjectNotes", projeto: currentProject, projectNotes: notes })
+        });
+        alert("Anotações salvas com sucesso para o projeto " + currentProject);
+      } catch (e) {
+        alert("Erro ao guardar anotações.");
+      } finally {
+        btn.disabled = false;
+        btn.innerHTML = `<span>💾 Guardar Aprendizagens</span>`;
+      }
     }
 
     function parseCustos(custosRaw) {
@@ -613,20 +833,15 @@
       document.getElementById("kpi-completed").innerText = completed;
       document.getElementById("kpi-pending").innerText = data.length - completed;
 
-      let totalGeral = 0;
-      let totalInfralobo = 0;
-      let totalParceiros = 0;
+      let totalGeral = 0, totalInfralobo = 0, totalParceiros = 0;
 
       data.forEach(d => {
         const lista = parseCustos(d.Custos || d.custos);
         lista.forEach(c => {
           const val = parseFloat(c.valor) || 0;
           totalGeral += val;
-          if (String(c.responsavel).toLowerCase().includes("infralobo")) {
-            totalInfralobo += val;
-          } else {
-            totalParceiros += val;
-          }
+          if (String(c.responsavel).toLowerCase().includes("infralobo")) totalInfralobo += val;
+          else totalParceiros += val;
         });
       });
 
@@ -651,18 +866,25 @@
       document.getElementById("input-fase").value = item.Fase || item.fase || "Pré-evento";
       document.getElementById("input-tarefa").value = item.Tarefa || item.tarefa || "";
       document.getElementById("input-progresso").value = item.Progresso || item.progresso || "Pendente";
-      document.getElementById("input-urgencia").value = item["Urgência / Importância"] || item["Urgência/ Importância"] || item.urgencia || "Normal";
       document.getElementById("input-responsabilidade").value = item.Responsabilidade || item.responsabilidade || "";
       document.getElementById("input-instituicoes").value = item["Instituições / Contactos"] || item["Instituições/ empresas a contactar"] || item.instituicoes || "";
+      document.getElementById("input-urgencia").value = item["Urgência / Importância"] || item["Urgência/ Importância"] || item.urgencia || "Normal";
+      
+      // Ajusta data de início para o input HTML (YYYY-MM-DD)
+      const rawInicio = item["Data de início"] || item["Data Início"] || item.dataInicio || "";
+      document.getElementById("input-data-inicio").value = rawInicio ? rawInicio.split("T")[0] : "";
+      
+      // Ajusta data de fim para o input HTML (YYYY-MM-DD)
+      const rawFim = item["Data de fim"] || item["Data Fim"] || item.dataFim || "";
+      document.getElementById("input-data-fim").value = rawFim ? rawFim.split("T")[0] : "";
+
       document.getElementById("input-notas").value = item.Notas || item.notas || "";
       document.getElementById("input-fotos").value = item.Fotos || item.fotos || "";
 
       const container = document.getElementById("cost-items-container");
       container.innerHTML = "";
       const custosLista = parseCustos(item.Custos || item.custos);
-      custosLista.forEach(c => {
-        addCostRow(c.descricao, c.valor, c.responsavel, c.fatura);
-      });
+      custosLista.forEach(c => addCostRow(c.descricao, c.valor, c.responsavel, c.fatura));
 
       document.getElementById("modal-action-title").innerText = "Editar Tarefa";
       document.getElementById("submit-btn-text").innerText = "Atualizar Tarefa";
@@ -746,21 +968,52 @@
           method: "POST",
           mode: "no-cors",
           headers: { "Content-Type": "text/plain;charset=utf-8" },
-          body: JSON.stringify({
-            action: "createProject",
-            projectName: nomeProjeto
-          })
+          body: JSON.stringify({ action: "createProject", projectName: nomeProjeto })
         });
 
         closeProjectModal();
         nomeInput.value = "";
         setTimeout(() => loadProjects(nomeProjeto), 1500);
-
       } catch (err) {
         alert("Erro ao criar o novo projeto.");
       } finally {
         btn.disabled = false;
         btn.innerHTML = `<span>Criar Projeto</span>`;
+      }
+    }
+
+    async function submitDuplicateProject(e) {
+      e.preventDefault();
+      const btn = document.getElementById("duplicate-project-btn");
+      const nomeInput = document.getElementById("input-nome-duplicado");
+      const novoNome = nomeInput.value.trim();
+
+      if (!novoNome) return;
+
+      btn.disabled = true;
+      btn.innerHTML = `<span>A replicar...</span>`;
+
+      try {
+        await fetch(API_URL, {
+          method: "POST",
+          mode: "no-cors",
+          headers: { "Content-Type": "text/plain;charset=utf-8" },
+          body: JSON.stringify({
+            action: "duplicateProject",
+            sourceProject: currentProject,
+            newProjectName: novoNome
+          })
+        });
+
+        closeDuplicateModal();
+        nomeInput.value = "";
+        setTimeout(() => loadProjects(novoNome), 1500);
+
+      } catch (err) {
+        alert("Erro ao replicar o projeto.");
+      } finally {
+        btn.disabled = false;
+        btn.innerHTML = `<span>Criar Réplica</span>`;
       }
     }
 
@@ -778,9 +1031,11 @@
         fase: document.getElementById("input-fase").value,
         tarefa: document.getElementById("input-tarefa").value,
         progresso: document.getElementById("input-progresso").value,
-        urgencia: document.getElementById("input-urgencia").value,
         responsabilidade: document.getElementById("input-responsabilidade").value,
         instituicoes: document.getElementById("input-instituicoes").value,
+        urgencia: document.getElementById("input-urgencia").value,
+        dataInicio: document.getElementById("input-data-inicio").value,
+        dataFim: document.getElementById("input-data-fim").value,
         notas: document.getElementById("input-notas").value,
         fotos: document.getElementById("input-fotos").value,
         custos: custosArray
@@ -810,7 +1065,9 @@
     function openProjectModal() { document.getElementById("project-modal").classList.remove("hidden"); }
     function closeProjectModal() { document.getElementById("project-modal").classList.add("hidden"); }
 
-    // SCRIPT PARA REDIMENSIONAR COLUNAS (RESIZABLE COLUMNS)
+    function openDuplicateModal() { document.getElementById("duplicate-modal").classList.remove("hidden"); }
+    function closeDuplicateModal() { document.getElementById("duplicate-modal").classList.add("hidden"); }
+
     function makeTableResizable(tableId) {
       const table = document.getElementById(tableId);
       if (!table) return;
@@ -832,9 +1089,7 @@
 
           const onMouseMove = e => {
             const width = startWidth + (e.pageX - startX);
-            if (width > 50) {
-              col.style.width = `${width}px`;
-            }
+            if (width > 50) col.style.width = `${width}px`;
           };
 
           const onMouseUp = () => {
@@ -849,7 +1104,6 @@
       });
     }
 
-    // Inicialização
     loadProjects().then(() => {
       makeTableResizable("resizable-table");
     });
