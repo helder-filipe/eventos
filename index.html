@@ -26,6 +26,16 @@
     }
     .resizer:hover, .resizing { background: #059669; }
 
+    /* Estilo dos cabeçalhos ordenáveis */
+    .sortable-header {
+      cursor: pointer;
+      user-select: none;
+      transition: background-color 0.15s ease;
+    }
+    .sortable-header:hover {
+      background-color: #e2e8f0 !important;
+    }
+
     /* Drag and Drop styling */
     tr.dragging {
       opacity: 0.4;
@@ -41,8 +51,7 @@
     }
 
     @media print {
-      /* Ocultar elementos desnecessários na impressão */
-      header, #auth-screen, .no-print, button, input, select, .resizer {
+      header, #auth-screen, .no-print, button, input, select, .resizer, .sort-icon {
         display: none !important;
       }
 
@@ -68,7 +77,6 @@
         margin-bottom: 8px !important;
       }
 
-      /* Título do Projeto em Destaque na Impressão */
       #print-project-header {
         display: block !important;
         text-align: center;
@@ -90,7 +98,6 @@
         color: #475569 !important;
       }
 
-      /* Formatação Comprimida dos KPIs */
       .grid {
         display: flex !important;
         gap: 8px !important;
@@ -104,7 +111,6 @@
         border-radius: 6px !important;
       }
 
-      /* Tabela ultra-compacta para caber na folha */
       table {
         width: 100% !important;
         table-layout: auto !important;
@@ -395,24 +401,59 @@
           </div>
         </div>
 
-        <!-- Table View -->
+        <!-- Table View com Ordenação em Todos os Cabeçalhos -->
         <div class="w-full overflow-x-auto">
           <table id="resizable-table" class="w-full text-left border-collapse table-fixed">
             <thead>
               <tr class="bg-slate-100/80 text-slate-600 text-[11px] font-semibold uppercase tracking-wider border-b border-slate-200">
                 <th style="width: 30px;" class="py-2.5 px-1 text-center no-print"></th>
-                <th style="width: 80px;" class="py-2.5 px-2">Fase</th>
-                <th style="width: 180px;" class="py-2.5 px-2">Tarefa</th>
-                <th style="width: 100px;" class="py-2.5 px-2">Progresso</th>
-                <th style="width: 130px;" class="py-2.5 px-2">Responsabilidade</th>
-                <th style="width: 140px;" class="py-2.5 px-2">Instituições / Contactos</th>
-                <th style="width: 90px;" class="py-2.5 px-2">Urgência</th>
-                <th style="width: 85px;" class="py-2.5 px-2">Início</th>
-                <th style="width: 85px;" class="py-2.5 px-2">Fim</th>
-                <th style="width: 120px;" class="py-2.5 px-2">Custos</th>
-                <th style="width: 150px;" class="py-2.5 px-2">Notas</th>
+                
+                <th style="width: 80px;" onclick="sortByColumn('Fase')" class="py-2.5 px-2 sortable-header" title="Clica para ordenar por Fase">
+                  <div class="flex items-center justify-between"><span>Fase</span><span id="sort-icon-Fase" class="sort-icon text-slate-400">↕</span></div>
+                </th>
+                
+                <th style="width: 180px;" onclick="sortByColumn('Tarefa')" class="py-2.5 px-2 sortable-header" title="Clica para ordenar por Tarefa">
+                  <div class="flex items-center justify-between"><span>Tarefa</span><span id="sort-icon-Tarefa" class="sort-icon text-slate-400">↕</span></div>
+                </th>
+                
+                <th style="width: 100px;" onclick="sortByColumn('Progresso')" class="py-2.5 px-2 sortable-header" title="Clica para ordenar por Progresso">
+                  <div class="flex items-center justify-between"><span>Progresso</span><span id="sort-icon-Progresso" class="sort-icon text-slate-400">↕</span></div>
+                </th>
+                
+                <th style="width: 130px;" onclick="sortByColumn('Responsabilidade')" class="py-2.5 px-2 sortable-header" title="Clica para ordenar por Responsabilidade">
+                  <div class="flex items-center justify-between"><span>Responsabilidade</span><span id="sort-icon-Responsabilidade" class="sort-icon text-slate-400">↕</span></div>
+                </th>
+                
+                <th style="width: 140px;" onclick="sortByColumn('Instituicoes')" class="py-2.5 px-2 sortable-header" title="Clica para ordenar por Instituições">
+                  <div class="flex items-center justify-between"><span>Instituições</span><span id="sort-icon-Instituicoes" class="sort-icon text-slate-400">↕</span></div>
+                </th>
+                
+                <th style="width: 90px;" onclick="sortByColumn('Urgencia')" class="py-2.5 px-2 sortable-header" title="Clica para ordenar por Urgência">
+                  <div class="flex items-center justify-between"><span>Urgência</span><span id="sort-icon-Urgencia" class="sort-icon text-slate-400">↕</span></div>
+                </th>
+                
+                <th style="width: 85px;" onclick="sortByColumn('DataInicio')" class="py-2.5 px-2 sortable-header" title="Clica para ordenar por Data de Início">
+                  <div class="flex items-center justify-between"><span>Início</span><span id="sort-icon-DataInicio" class="sort-icon text-slate-400">↕</span></div>
+                </th>
+                
+                <th style="width: 85px;" onclick="sortByColumn('DataFim')" class="py-2.5 px-2 sortable-header" title="Clica para ordenar por Data de Fim">
+                  <div class="flex items-center justify-between"><span>Fim</span><span id="sort-icon-DataFim" class="sort-icon text-slate-400">↕</span></div>
+                </th>
+                
+                <th style="width: 120px;" onclick="sortByColumn('Custos')" class="py-2.5 px-2 sortable-header" title="Clica para ordenar por Custos">
+                  <div class="flex items-center justify-between"><span>Custos</span><span id="sort-icon-Custos" class="sort-icon text-slate-400">↕</span></div>
+                </th>
+                
+                <th style="width: 150px;" onclick="sortByColumn('Notas')" class="py-2.5 px-2 sortable-header" title="Clica para ordenar por Notas">
+                  <div class="flex items-center justify-between"><span>Notas</span><span id="sort-icon-Notas" class="sort-icon text-slate-400">↕</span></div>
+                </th>
+                
                 <th style="width: 55px;" class="py-2.5 px-2 text-center no-print">Fotos</th>
-                <th style="width: 140px;" class="py-2.5 px-2">Histórico</th>
+                
+                <th style="width: 140px;" onclick="sortByColumn('CriadoPor')" class="py-2.5 px-2 sortable-header" title="Clica para ordenar por Histórico/Criador">
+                  <div class="flex items-center justify-between"><span>Histórico</span><span id="sort-icon-CriadoPor" class="sort-icon text-slate-400">↕</span></div>
+                </th>
+                
                 <th style="width: 70px;" class="py-2.5 px-2 text-center no-print">Ações</th>
               </tr>
             </thead>
@@ -587,6 +628,10 @@
 
     let draggedRow = null;
 
+    // Estado da Ordenação de Colunas
+    let currentSortColumn = null;
+    let isSortAscending = true;
+
     window.addEventListener("DOMContentLoaded", () => {
       const savedUser = localStorage.getItem("app_user");
       if (savedUser) {
@@ -753,7 +798,6 @@
       document.getElementById("modal-project-name").innerText = currentProject;
       document.getElementById("dup-source-name").innerText = currentProject;
       
-      // Atualiza também o cabeçalho impresso em A4
       document.getElementById("print-project-name").innerText = `PLANO DE AÇÕES: ${currentProject.toUpperCase()}`;
       const now = new Date();
       const dateStr = `${String(now.getDate()).padStart(2, '0')}/${String(now.getMonth() + 1).padStart(2, '0')}/${now.getFullYear()} ${String(now.getHours()).padStart(2, '0')}:${String(now.getMinutes()).padStart(2, '0')}`;
@@ -813,6 +857,56 @@
 
       instSelect.innerHTML = '<option value="">Todas</option>';
       insts.forEach(i => instSelect.innerHTML += `<option value="${i}">${i}</option>`);
+    }
+
+    // LÓGICA DE ORDENAÇÃO POR CLIQUE NO CABEÇALHO DA COLUNA
+    function sortByColumn(columnKey) {
+      if (currentSortColumn === columnKey) {
+        isSortAscending = !isSortAscending;
+      } else {
+        currentSortColumn = columnKey;
+        isSortAscending = true;
+      }
+
+      // Atualizar ícones das colunas
+      document.querySelectorAll(".sort-icon").forEach(el => el.innerText = "↕");
+      const activeIcon = document.getElementById(`sort-icon-${columnKey}`);
+      if (activeIcon) {
+        activeIcon.innerText = isSortAscending ? "↑" : "↓";
+      }
+
+      rawTasksData.sort((a, b) => {
+        let valA = getColumnValueForSort(a, columnKey);
+        let valB = getColumnValueForSort(b, columnKey);
+
+        if (typeof valA === "string") valA = valA.toLowerCase();
+        if (typeof valB === "string") valB = valB.toLowerCase();
+
+        if (valA < valB) return isSortAscending ? -1 : 1;
+        if (valA > valB) return isSortAscending ? 1 : -1;
+        return 0;
+      });
+
+      applyAllFilters();
+    }
+
+    function getColumnValueForSort(item, key) {
+      switch (key) {
+        case 'Fase': return item.Fase || item.fase || "";
+        case 'Tarefa': return item.Tarefa || item.tarefa || "";
+        case 'Progresso': return item.Progresso || item.progresso || "";
+        case 'Responsabilidade': return item.Responsabilidade || item.responsabilidade || "";
+        case 'Instituicoes': return item["Instituições / Contactos"] || item["Instituições/ empresas a contactar"] || item.instituicoes || "";
+        case 'Urgencia': return item["Urgência / Importância"] || item["Urgência/ Importância"] || item.urgencia || "";
+        case 'DataInicio': return item["Data de início"] || item["Data Início"] || item.dataInicio || "";
+        case 'DataFim': return item["Data de fim"] || item["Data Fim"] || item.dataFim || "";
+        case 'Custos':
+          const c = parseCustos(item.Custos || item.custos);
+          return c.reduce((acc, curr) => acc + (parseFloat(curr.valor) || 0), 0);
+        case 'Notas': return item.Notas || item.notas || "";
+        case 'CriadoPor': return item["Criado por"] || item.criadoPor || "";
+        default: return "";
+      }
     }
 
     function applyAllFilters() {
@@ -891,7 +985,6 @@
         row.draggable = true;
         row.dataset.taskIndex = rawTasksData.indexOf(item);
 
-        // EVENTOS DRAG AND DROP
         row.addEventListener("dragstart", (e) => {
           draggedRow = row;
           row.classList.add("dragging");
@@ -917,10 +1010,8 @@
           }
         });
 
-        // 0. Drag Handle
         const dragHandle = `<td class="p-2 text-center text-slate-300 hover:text-slate-600 drag-handle no-print" title="Arrastar para reordenar">⋮⋮</td>`;
 
-        // 1. Fase
         const faseVal = item.Fase || item.fase || "Pré-evento";
         let phaseBadge = '<span class="px-1.5 py-0.5 rounded text-[10px] font-semibold bg-slate-100 text-slate-700 whitespace-nowrap">Pré-evento</span>';
         if (faseVal === "Evento") {
@@ -929,10 +1020,8 @@
           phaseBadge = '<span class="px-1.5 py-0.5 rounded text-[10px] font-semibold bg-purple-100 text-purple-700 whitespace-nowrap">Pós-evento</span>';
         }
 
-        // 2. Tarefa
         const tarefaVal = item.Tarefa || item.tarefa || "-";
 
-        // 3. Progresso
         const progressoVal = item.Progresso || item.progresso || "Pendente";
         let progressBadge = '<span class="px-2 py-0.5 rounded-full text-[10px] font-medium bg-slate-100 text-slate-600 whitespace-nowrap">Pendente</span>';
         if (progressoVal === "Concluído") {
@@ -945,14 +1034,12 @@
           progressBadge = '<span class="px-2 py-0.5 rounded-full text-[10px] font-medium bg-red-100 text-red-700 border border-red-200 whitespace-nowrap">Cancelado</span>';
         }
 
-        // 4 & 5. Responsabilidade e Contactos
         const respVal = item.Responsabilidade || item.responsabilidade || "";
         const respBadges = renderMultiBadges(respVal, "bg-slate-100 text-slate-700 border-slate-200");
 
         const instVal = item["Instituições / Contactos"] || item["Instituições/ empresas a contactar"] || item.instituicoes || "";
         const instBadges = renderMultiBadges(instVal, "bg-indigo-50 text-indigo-700 border-indigo-200");
 
-        // 6. Urgência
         const urgenciaVal = item["Urgência / Importância"] || item["Urgência/ Importância"] || item.urgencia || "Normal";
         let urgencyBadge = '<span class="text-slate-500 text-[11px]">Normal</span>';
         if (String(urgenciaVal).includes("Urgente")) {
@@ -961,11 +1048,9 @@
           urgencyBadge = '<span class="px-1.5 py-0.5 rounded text-[10px] font-semibold bg-blue-100 text-blue-700 border border-blue-200 whitespace-nowrap">Importante</span>';
         }
 
-        // 7 & 8. Datas
         const dInicioFormatted = formatDateToPT(item["Data de início"] || item["Data Início"] || item.dataInicio || "");
         const dFimFormatted = formatDateToPT(item["Data de fim"] || item["Data Fim"] || item.dataFim || "");
 
-        // 9. Custos
         const custosLista = parseCustos(item.Custos || item.custos);
         let custosCell = '<span class="text-slate-300 text-[11px]">-</span>';
         if (custosLista.length > 0) {
@@ -981,10 +1066,8 @@
           custosCell = `<div><span class="font-bold text-slate-800 text-[11px]">${totalTarefa.toFixed(2)} €</span><div class="mt-0.5 bg-slate-50 p-1 rounded border border-slate-200/60">${detalhesHtml}</div></div>`;
         }
 
-        // 10. Notas
         const notasVal = item.Notas || item.notas || "-";
 
-        // 11. Fotos
         const fotoUrl = item.Fotos || item.fotos || "";
         let photosCell = '<span class="text-slate-300">-</span>';
         if (fotoUrl && String(fotoUrl).trim().startsWith("http")) {
@@ -993,7 +1076,6 @@
           photosCell = `<span class="text-[10px] text-slate-400 italic" title="${fotoUrl}">Local</span>`;
         }
 
-        // 12. Histórico Auditoria
         const criador = item["Criado por"] || item.criadoPor || "-";
         const dataCriacao = item["Data de criação"] || item.dataCriacao || "-";
         const editor = item["Editado por"] || item.editadoPor || "";
@@ -1006,7 +1088,6 @@
         }
         auditCell += `</div>`;
 
-        // 13. Ações
         const realIndex = rawTasksData.indexOf(item);
         const editBtn = `<button onclick="editTask(${realIndex})" class="bg-slate-100 hover:bg-emerald-50 text-slate-600 hover:text-emerald-700 border border-slate-200 rounded px-1.5 py-1 text-[11px] font-medium transition" title="Editar">✏️</button>`;
         const deleteBtn = `<button onclick="deleteTask(${realIndex})" class="bg-slate-100 hover:bg-red-50 text-slate-600 hover:text-red-700 border border-slate-200 rounded px-1.5 py-1 text-[11px] font-medium transition" title="Apagar">🗑️</button>`;
@@ -1031,7 +1112,6 @@
       });
     }
 
-    // GUARDAR NOVA ORDEM DAS TAREFAS NO SHEETS
     async function saveNewTaskOrder() {
       const rows = document.querySelectorAll("#task-list > tr");
       const statusLabel = document.getElementById("reorder-status");
@@ -1086,7 +1166,6 @@
       }
     }
 
-    // DESENHAR GRÁFICO DE GANTT
     function renderGanttChart(data) {
       const container = document.getElementById("gantt-chart-container");
       
