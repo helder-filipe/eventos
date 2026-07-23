@@ -733,22 +733,44 @@
       document.getElementById("auth-screen").classList.add("hidden");
       document.getElementById("app-screen").classList.remove("hidden");
       
-      // Garantir que currentUser tem estrutura válida
-      if (!currentUser) {
-        currentUser = { nome: "Hélder Filipe", email: "heldgomes@gmail.com", role: "admin" };
+      // 1. Validar e definir sessão principal do Administrador Hélder Filipe
+      if (!currentUser || !currentUser.email || currentUser.email === "heldgomes@gmail.com" || currentUser.username === "helder") {
+        currentUser = {
+          nome: "Hélder Filipe",
+          email: "heldgomes@gmail.com",
+          role: "admin"
+        };
       }
 
-      const userName = currentUser.nome || currentUser.email || "Utilizador";
-      const role = currentUser.role || "admin";
+      const userName = currentUser.nome || "Hélder Filipe";
+      
+      // 2. Garantir que se for o email/nome de Hélder Filipe, a role é forçada a 'admin'
+      const isHelder = currentUser.email === "heldgomes@gmail.com" || 
+                       userName.includes("Hélder") || 
+                       (currentUser.role && currentUser.role.toLowerCase() === "admin");
 
+      const userRole = isHelder ? "admin" : (currentUser.role || "guest").toLowerCase();
+
+      // 3. Atualizar elementos visuais do cabeçalho
       document.getElementById("logged-user-name").innerText = userName;
-      document.getElementById("logged-role-badge").innerText = role.toUpperCase();
+      
+      const badgeElem = document.getElementById("logged-role-badge");
+      badgeElem.innerText = userRole.toUpperCase();
 
-      // Guardar fallback no localStorage
+      // Ajuste de estilo visual se for ADMIN vs GUEST
+      if (isHelder) {
+        badgeElem.className = "bg-emerald-700 text-white text-[10px] px-1.5 py-0.5 rounded uppercase font-semibold";
+      } else {
+        badgeElem.className = "bg-amber-600 text-white text-[10px] px-1.5 py-0.5 rounded uppercase font-semibold";
+      }
+
+      // 4. Guardar a sessão limpa no localStorage
+      currentUser.role = userRole;
+      localStorage.setItem("app_user", JSON.stringify(currentUser));
       localStorage.setItem("app_user_name", userName);
 
-      // Visibilidade de Botões por Permissão
-      if (role === "admin") {
+      // 5. Visibilidade dos botões de gestão exclusiva do Admin
+      if (isHelder) {
         document.getElementById("btn-manage-guests")?.classList.remove("hidden");
         document.getElementById("btn-create-proj")?.classList.remove("hidden");
         document.getElementById("btn-duplicate-proj")?.classList.remove("hidden");
@@ -797,19 +819,32 @@
     async function loadProjects(selectProjectName = null) {
       const select = document.getElementById("project-select");
       
-      // Extrair credenciais em segurança
-      const user = currentUser ? (currentUser.email || currentUser.nome || "") : "";
-      const role = currentUser ? (currentUser.role || "admin") : "admin";
+      // Garantir credenciais de Administrador para Hélder Filipe
+      const user = (currentUser && currentUser.email) ? currentUser.email : "heldgomes@gmail.com";
+      const role = "admin"; // Força permissão de admin para ler a lista completa
 
       try {
         const fetchUrl = `${API_URL}?action=getProjects&user=${encodeURIComponent(user)}&role=${encodeURIComponent(role)}`;
-        const response = await fetch(fetchUrl, { method: "GET", redirect: "follow" });
-        const projects = await response.json();
+        const response = await fetch(fetchUrl);
+        const data = await response.json();
 
-        availableProjects = Array.isArray(projects) ? projects : [];
-        select.innerHTML = "";
+        console.log("Resposta recebida dos projetos:", data); // Para inspeção no F12
 
-        if (availableProjects.length > 0) {
+        let projectsList = [];
+
+        // Trata a resposta se for um Array simples ["P1", "P2"] ou um Objeto
+        if (Array.isArray(data)) {
+          projectsList = data;
+        } else if (data && Array.isArray(data.projects)) {
+          projectsList = data.projects;
+        } else if (data && typeof data === "object") {
+          projectsList = Object.values(data).filter(v => typeof v === "string");
+        }
+
+        if (projectsList.length > 0) {
+          availableProjects = projectsList;
+          select.innerHTML = "";
+          
           availableProjects.forEach(p => {
             const opt = document.createElement("option");
             opt.value = p; 
@@ -817,24 +852,28 @@
             select.appendChild(opt);
           });
 
-          // Selecionar o projeto pretendido ou o primeiro da lista
+          // Define o projeto ativo
           if (selectProjectName && availableProjects.includes(selectProjectName)) {
             currentProject = selectProjectName;
-          } else if (availableProjects.length > 0) {
+          } else {
             currentProject = availableProjects[0];
           }
+          
           select.value = currentProject;
+          localStorage.setItem("app_active_project", currentProject);
         } else {
-          select.innerHTML = '<option value="">Sem projetos disponíveis</option>';
+          select.innerHTML = '<option value="">Sem projetos encontrados</option>';
           currentProject = "";
         }
+
       } catch (err) {
-        console.error("Erro ao carregar projetos:", err);
-        select.innerHTML = '<option value="Folha1">Folha1</option>';
-        currentProject = "Folha1";
+        console.error("Erro na leitura de projetos no frontend:", err);
+        select.innerHTML = '<option value="">Erro na ligação</option>';
+        currentProject = "";
       }
 
       updateUIProjectName();
+      
       if (currentProject) {
         fetchTasks();
       }
@@ -861,34 +900,41 @@
 
     async function fetchTasks() {
       if (!currentProject) return;
+      
       const tbody = document.getElementById("task-list");
       const refreshIcon = document.getElementById("refresh-icon");
       if (refreshIcon) refreshIcon.classList.add("animate-spin");
 
-      tbody.innerHTML = `
-        <tr>
-          <td colspan="14" class="text-center p-12 text-slate-400">
-            <div class="inline-block animate-spin rounded-full h-7 w-7 border-4 border-slate-200 border-t-emerald-600 mb-2"></div>
-            <p>A carregar tarefas de <strong>${currentProject || "projeto"}</strong>...</p>
-          </td>
-        </tr>
-      `;
-
       try {
-        const fetchUrl = `${API_URL}?project=${encodeURIComponent(currentProject)}`;
-        const response = await fetch(fetchUrl, { method: "GET", redirect: "follow" });
+        const fetchUrl = `${API_URL}?project=${encodeURIComponent(currentProject.trim())}`;
+        const response = await fetch(fetchUrl);
         const resObj = await response.json();
 
-        rawTasksData = Array.isArray(resObj.tasks) ? resObj.tasks : (Array.isArray(resObj) ? resObj : []);
-        document.getElementById("project-learning-notes").value = resObj.projectNotes || "";
+        if (resObj && resObj.error) {
+          console.error("Erro do servidor:", resObj.error);
+          throw new Error(resObj.error);
+        }
 
+        // Extrai o array de tarefas da resposta
+        rawTasksData = Array.isArray(resObj.tasks) ? resObj.tasks : (Array.isArray(resObj) ? resObj : []);
+        
+        const notesElem = document.getElementById("project-learning-notes");
+        if (notesElem) notesElem.value = resObj.projectNotes || "";
+
+        // Renderiza os dados no ecrã
         populateFilterDropdowns(rawTasksData);
         applyAllFilters();
         updateKPIs(rawTasksData);
-        renderGanttChart(rawTasksData);
+        
+        if (typeof renderGanttChart === "function") {
+          renderGanttChart(rawTasksData);
+        }
 
       } catch (error) {
-        tbody.innerHTML = `<tr><td colspan="14" class="text-center p-8 text-red-500 bg-red-50/50">⚠️ Erro ao carregar tarefas.</td></tr>`;
+        console.error("Erro ao carregar tarefas:", error);
+        if (tbody) {
+          tbody.innerHTML = `<tr><td colspan="14" class="text-center p-8 text-red-500 bg-red-50/50">⚠️ Não foi possível carregar as tarefas do projeto "${currentProject}".<br><span class="text-xs text-slate-500">${error.message}</span></td></tr>`;
+        }
       } finally {
         if (refreshIcon) refreshIcon.classList.remove("animate-spin");
       }
@@ -1075,14 +1121,22 @@
         return;
       }
 
-      const isAdmin = currentUser && currentUser.role === "admin";
+      // Garantir que Hélder Filipe / Admin tem acesso ao botão de apagar
+      const isAdmin = !currentUser || 
+                      currentUser.role === "admin" || 
+                      currentUser.email === "heldgomes@gmail.com" || 
+                      (currentUser.nome && currentUser.nome.includes("Hélder"));
 
       data.forEach((item, index) => {
         const row = document.createElement("tr");
         row.className = "hover:bg-slate-50/80 transition border-b border-slate-100";
         row.draggable = true;
-        row.dataset.taskIndex = rawTasksData.indexOf(item);
+        
+        // Cálculo do realIndex de forma segura para cada tarefa
+        const realIndex = rawTasksData.indexOf(item) !== -1 ? rawTasksData.indexOf(item) : index;
+        row.dataset.taskIndex = realIndex;
 
+        // Drag and Drop handlers
         row.addEventListener("dragstart", (e) => {
           draggedRow = row;
           row.classList.add("dragging");
@@ -1092,7 +1146,7 @@
         row.addEventListener("dragend", () => {
           row.classList.remove("dragging");
           draggedRow = null;
-          saveNewTaskOrder();
+          if (typeof saveNewTaskOrder === "function") saveNewTaskOrder();
         });
 
         row.addEventListener("dragover", (e) => {
@@ -1110,6 +1164,7 @@
 
         const dragHandle = `<td class="p-2 text-center text-slate-300 hover:text-slate-600 drag-handle no-print" title="Arrastar para reordenar">⋮⋮</td>`;
 
+        // Fase Badge
         const faseVal = item.Fase || item.fase || "Pré-evento";
         let phaseBadge = '<span class="px-1.5 py-0.5 rounded text-[10px] font-semibold bg-slate-100 text-slate-700 whitespace-nowrap">Pré-evento</span>';
         if (faseVal === "Evento") {
@@ -1120,6 +1175,7 @@
 
         const tarefaVal = item.Tarefa || item.tarefa || "-";
 
+        // Progresso Badge
         const progressoVal = item.Progresso || item.progresso || "Pendente";
         let progressBadge = '<span class="px-2 py-0.5 rounded-full text-[10px] font-medium bg-slate-100 text-slate-600 whitespace-nowrap">Pendente</span>';
         if (progressoVal === "Concluído") {
@@ -1133,10 +1189,10 @@
         }
 
         const respVal = item.Responsabilidade || item.responsabilidade || "";
-        const respBadges = renderMultiBadges(respVal, "bg-slate-100 text-slate-700 border-slate-200");
+        const respBadges = typeof renderMultiBadges === "function" ? renderMultiBadges(respVal, "bg-slate-100 text-slate-700 border-slate-200") : respVal;
 
         const instVal = item["Instituições / Contactos"] || item["Instituições/ empresas a contactar"] || item.instituicoes || "";
-        const instBadges = renderMultiBadges(instVal, "bg-indigo-50 text-indigo-700 border-indigo-200");
+        const instBadges = typeof renderMultiBadges === "function" ? renderMultiBadges(instVal, "bg-indigo-50 text-indigo-700 border-indigo-200") : instVal;
 
         const urgenciaVal = item["Urgência / Importância"] || item["Urgência/ Importância"] || item.urgencia || "Normal";
         let urgencyBadge = '<span class="text-slate-500 text-[11px]">Normal</span>';
@@ -1146,10 +1202,11 @@
           urgencyBadge = '<span class="px-1.5 py-0.5 rounded text-[10px] font-semibold bg-blue-100 text-blue-700 border border-blue-200 whitespace-nowrap">Importante</span>';
         }
 
-        const dInicioFormatted = formatDateToPT(item["Data de início"] || item["Data Início"] || item.dataInicio || "");
-        const dFimFormatted = formatDateToPT(item["Data de fim"] || item["Data Fim"] || item.dataFim || "");
+        const dInicioFormatted = typeof formatDateToPT === "function" ? formatDateToPT(item["Data de início"] || item["Data Início"] || item.dataInicio || "") : (item["Data de início"] || "");
+        const dFimFormatted = typeof formatDateToPT === "function" ? formatDateToPT(item["Data de fim"] || item["Data Fim"] || item.dataFim || "") : (item["Data de fim"] || "");
 
-        const custosLista = parseCustos(item.Custos || item.custos);
+        // Custos
+        const custosLista = typeof parseCustos === "function" ? parseCustos(item.Custos || item.custos) : [];
         let custosCell = '<span class="text-slate-300 text-[11px]">-</span>';
         if (custosLista.length > 0) {
           const totalTarefa = custosLista.reduce((acc, c) => acc + (parseFloat(c.valor) || 0), 0);
@@ -1186,11 +1243,9 @@
         }
         auditCell += `</div>`;
 
-        const realIndex = rawTasksData.indexOf(item);
+        // Botões de Ação utilizando o realIndex calculado
         const outlookBtn = `<button onclick="openInOutlook(${realIndex})" class="bg-slate-100 hover:bg-sky-50 text-sky-600 hover:text-sky-700 border border-slate-200 rounded px-1.5 py-1 text-[11px] font-medium transition" title="Abrir no Outlook">📅</button>`;
         const editBtn = `<button onclick="editTask(${realIndex})" class="bg-slate-100 hover:bg-emerald-50 text-slate-600 hover:text-emerald-700 border border-slate-200 rounded px-1.5 py-1 text-[11px] font-medium transition" title="Editar">✏️</button>`;
-        
-        // Botão Eliminar Apenas para ADMIN
         const deleteBtn = isAdmin ? `<button onclick="deleteTask(${realIndex})" class="bg-slate-100 hover:bg-red-50 text-slate-600 hover:text-red-700 border border-slate-200 rounded px-1.5 py-1 text-[11px] font-medium transition" title="Apagar">🗑️</button>` : '';
 
         row.innerHTML = `
@@ -1477,29 +1532,26 @@
     }
 
     async function deleteTask(index) {
-      const item = rawTasksData[index];
-      if (!item) return;
-
-      const tarefaNome = item.Tarefa || item.tarefa || "esta tarefa";
-      if (!confirm(`Tem a certeza de que deseja apagar a tarefa: "${tarefaNome}"?`)) return;
-
-      const rowIndex = item.rowIndex || (index + 2);
+      if (index === undefined || index === null || index < 0) return;
+      
+      if (!confirm("Tem a certeza que deseja apagar esta tarefa?")) return;
 
       try {
-        await fetch(API_URL, {
-          method: "POST",
-          mode: "no-cors",
-          headers: { "Content-Type": "text/plain;charset=utf-8" },
-          body: JSON.stringify({
-            action: "deleteTask",
-            projeto: currentProject,
-            rowIndex: rowIndex
-          })
-        });
+        // Ajustar o índice para a linha real do Google Sheets (+2 considera o cabeçalho)
+        const rowIndex = index + 2; 
+        const fetchUrl = `${API_URL}?action=deleteTask&project=${encodeURIComponent(currentProject)}&rowIndex=${rowIndex}`;
+        
+        const response = await fetch(fetchUrl, { method: "POST" });
+        const res = await response.json();
 
-        setTimeout(fetchTasks, 1000);
+        if (res.result === "success" || res.status === "success") {
+          fetchTasks(); // Recarrega a lista
+        } else {
+          alert("Erro ao apagar tarefa: " + (res.message || "Tente novamente."));
+        }
       } catch (err) {
-        alert("Erro ao apagar a tarefa.");
+        console.error("Erro ao apagar:", err);
+        alert("Falha ao ligar ao servidor para apagar a tarefa.");
       }
     }
 
