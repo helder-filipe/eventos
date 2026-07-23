@@ -242,6 +242,11 @@
             🖨️ Imprimir / PDF
           </button>
 
+          <!-- BOTÃO PARA ABRIR O QUADRO KANBAN -->
+          <button onclick="openKanbanView()" title="Abrir vista de Quadro Kanban" class="bg-indigo-600 hover:bg-indigo-500 text-white font-medium px-3.5 py-2 rounded-lg shadow-sm transition-all flex items-center justify-center gap-1.5 text-sm active:scale-95 whitespace-nowrap">
+            📋 Quadro Kanban
+          </button>
+
           <button onclick="openModalForNew()" class="bg-emerald-600 hover:bg-emerald-500 text-white font-medium px-4 py-2 rounded-lg shadow-sm transition-all flex items-center justify-center gap-2 text-sm active:scale-95">
             <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
               <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4" />
@@ -716,12 +721,26 @@
       document.getElementById("auth-screen").classList.remove("hidden");
     }
 
+    // Adiciona esta função no <script> do index.html
+    function openKanbanView() {
+      const userName = currentUser ? (currentUser.nome || currentUser.email) : "";
+      const url = `kanban.html?project=${encodeURIComponent(currentProject)}&user=${encodeURIComponent(userName)}`;
+      window.location.href = url;
+    }
+
+    // Atualiza a tua função showAppScreen para guardar também a chave em texto simples
     function showAppScreen() {
       document.getElementById("auth-screen").classList.add("hidden");
       document.getElementById("app-screen").classList.remove("hidden");
-      document.getElementById("logged-user-name").innerText = currentUser.nome || currentUser.email;
+      
+      const userName = currentUser.nome || currentUser.email;
+      document.getElementById("logged-user-name").innerText = userName;
 
-      loadProjects().then(() => {
+      // Guardar fallback em texto simples (infalível no Firefox)
+      localStorage.setItem("app_user_name", userName);
+
+      const savedProject = localStorage.getItem("app_active_project");
+      loadProjects(savedProject).then(() => {
         makeTableResizable("resizable-table");
       });
     }
@@ -789,6 +808,7 @@
     function changeProject(project) {
       if (!project) return;
       currentProject = project;
+      localStorage.setItem("app_active_project", currentProject); // Guarda para o Kanban e refreshes
       updateUIProjectName();
       fetchTasks();
     }
@@ -969,6 +989,56 @@
       setKpiFilter("todos");
     }
 
+    function openInOutlook(index) {
+      const item = rawTasksData[index];
+      if (!item) return;
+
+      const tName = item.Tarefa || item.tarefa || "Ação";
+      const startStr = item["Data de início"] || item["Data Início"] || item.dataInicio || "";
+      const endStr = item["Data de fim"] || item["Data Fim"] || item.dataFim || "";
+      const notas = item.Notas || item.notas || "";
+      const resp = item.Responsabilidade || item.responsabilidade || "";
+      const inst = item["Instituições / Contactos"] || item["Instituições/ empresas a contactar"] || item.instituicoes || "";
+
+      // Construir corpo dos detalhes
+      let details = `Projeto: ${currentProject}\n`;
+      if (resp) details += `Responsável: ${resp}\n`;
+      if (inst) details += `Contactos/Parceiros: ${inst}\n`;
+      if (notas) details += `\nNotas:\n${notas}`;
+
+      // Verificar se existe pelo menos uma data
+      if (startStr || endStr) {
+        const outlookUrl = new URL("https://outlook.office.com/calendar/0/deeplink/compose");
+
+        // CASO 1: Tem Data de Início E Data de Fim diferentes -> Compromisso com horário (09:00 às 18:00)
+        if (startStr && endStr && startStr !== endStr) {
+          const startIso = `${startStr.split("T")[0]}T09:00:00`;
+          const endIso = `${endStr.split("T")[0]}T18:00:00`;
+          
+          outlookUrl.searchParams.set("startdt", startIso);
+          outlookUrl.searchParams.set("enddt", endIso);
+          outlookUrl.searchParams.set("allday", "false");
+        } 
+        // CASO 2: Tem apenas uma data (Data de Fim ou Início) -> Evento de Dia Inteiro no Outlook
+        else {
+          const targetDate = (endStr || startStr).split("T")[0];
+          
+          outlookUrl.searchParams.set("startdt", targetDate);
+          outlookUrl.searchParams.set("enddt", targetDate);
+          outlookUrl.searchParams.set("allday", "true");
+        }
+
+        outlookUrl.searchParams.set("subject", `[${currentProject}] ${tName}`);
+        outlookUrl.searchParams.set("body", details);
+        if (resp) outlookUrl.searchParams.set("location", resp);
+
+        window.open(outlookUrl.toString(), "_blank");
+      } 
+      else {
+        alert("Para exportar para o Outlook, por favor define pelo menos uma Data de Início ou Fim nesta tarefa.");
+      }
+    }
+
     function renderTable(data) {
       const tbody = document.getElementById("task-list");
       document.getElementById("task-count-badge").innerText = data.length;
@@ -1089,6 +1159,7 @@
         auditCell += `</div>`;
 
         const realIndex = rawTasksData.indexOf(item);
+        const outlookBtn = `<button onclick="openInOutlook(${realIndex})" class="bg-slate-100 hover:bg-sky-50 text-sky-600 hover:text-sky-700 border border-slate-200 rounded px-1.5 py-1 text-[11px] font-medium transition" title="Abrir no Outlook">📅</button>`;
         const editBtn = `<button onclick="editTask(${realIndex})" class="bg-slate-100 hover:bg-emerald-50 text-slate-600 hover:text-emerald-700 border border-slate-200 rounded px-1.5 py-1 text-[11px] font-medium transition" title="Editar">✏️</button>`;
         const deleteBtn = `<button onclick="deleteTask(${realIndex})" class="bg-slate-100 hover:bg-red-50 text-slate-600 hover:text-red-700 border border-slate-200 rounded px-1.5 py-1 text-[11px] font-medium transition" title="Apagar">🗑️</button>`;
 
@@ -1106,7 +1177,7 @@
           <td class="p-2 text-slate-500 text-[10px] leading-tight break-words">${notasVal}</td>
           <td class="p-2 text-center overflow-hidden no-print">${photosCell}</td>
           <td class="p-2 overflow-hidden">${auditCell}</td>
-          <td class="p-2 text-center overflow-hidden no-print"><div class="flex items-center justify-center gap-1">${editBtn}${deleteBtn}</div></td>
+          <td class="p-2 text-center overflow-hidden no-print"><div class="flex items-center justify-center gap-1">${outlookBtn}${editBtn}${deleteBtn}</div></td>
         `;
         tbody.appendChild(row);
       });

@@ -1,0 +1,368 @@
+<!DOCTYPE html>
+<html lang="pt">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Quadro Kanban - Gestão de Projetos</title>
+  
+  <link rel="icon" type="image/png" href="projeto.png">
+  <script src="https://cdn.tailwindcss.com"></script>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+
+  <style>
+    body { font-family: 'Inter', sans-serif; }
+    .kanban-col { min-height: calc(100vh - 160px); }
+    .kanban-card { cursor: grab; }
+    .kanban-card:active { cursor: grabbing; }
+    .kanban-card.dragging { opacity: 0.4; }
+    .kanban-dropzone.drag-over { background-color: #f1f5f9; border: 2px dashed #059669; }
+  </style>
+</head>
+<body class="bg-slate-100 text-slate-800 min-h-screen flex flex-col">
+
+  <!-- HEADER -->
+  <header class="bg-emerald-800 text-white shadow-md border-b border-emerald-900">
+    <div class="max-w-[98vw] mx-auto px-4 py-4 flex flex-col sm:flex-row justify-between items-center gap-4">
+      
+      <div class="flex items-center gap-3">
+        <span class="text-2xl">📋</span>
+        <div>
+          <h1 class="text-xl font-bold">Quadro Kanban</h1>
+          <p class="text-emerald-200 text-xs" id="kanban-project-subtitle">A carregar projeto...</p>
+        </div>
+      </div>
+
+      <div class="flex flex-wrap items-center gap-3">
+        <!-- User Badge & Logout -->
+        <div class="flex items-center gap-2 bg-emerald-900/80 px-3 py-1.5 rounded-lg border border-emerald-700/60 text-xs">
+          <span class="text-emerald-100 flex items-center gap-1">👤 <strong id="kanban-logged-user">Utilizador</strong></span>
+          <button onclick="handleKanbanLogout()" class="text-amber-300 hover:text-white font-bold ml-2 underline">Sair</button>
+        </div>
+
+        <!-- Botão para voltar ao Index (Tabela) -->
+        <a href="index.html" title="Voltar à vista de tabela" class="bg-emerald-700 hover:bg-emerald-600 text-white font-medium px-3 py-1.5 rounded-lg text-xs shadow-sm transition flex items-center gap-1">
+          📊 Vista Tabela
+        </a>
+
+        <!-- Seletor de Projeto -->
+        <div class="flex items-center gap-1.5">
+          <label for="kanban-project-select" class="text-xs font-semibold text-emerald-200 uppercase whitespace-nowrap">Projeto:</label>
+          <select id="kanban-project-select" onchange="changeKanbanProject(this.value)" class="bg-white text-slate-800 text-sm font-semibold rounded-md px-3 py-1.5 focus:outline-none cursor-pointer">
+            <option value="">A carregar...</option>
+          </select>
+        </div>
+
+        <button onclick="fetchKanbanTasks()" class="bg-emerald-900 hover:bg-emerald-700 text-white text-xs font-medium px-3 py-1.5 rounded-lg flex items-center gap-1.5 border border-emerald-700">
+          🔄 Atualizar
+        </button>
+      </div>
+
+    </div>
+  </header>
+
+  <!-- KANBAN BOARD (5 COLUNAS) -->
+  <main class="max-w-[98vw] mx-auto px-2 py-4 flex-grow w-full overflow-x-auto">
+    <div class="flex gap-3 min-w-[1400px]">
+
+      <!-- COLUNA: PENDENTE -->
+      <div class="flex-1 bg-slate-200/80 rounded-xl p-3 flex flex-col border border-slate-300">
+        <div class="flex justify-between items-center mb-3">
+          <h2 class="font-bold text-slate-700 text-xs uppercase tracking-wider flex items-center gap-1.5">
+            <span>⏳</span> Pendente
+          </h2>
+          <span id="count-Pendente" class="bg-slate-300 text-slate-700 text-xs px-2 py-0.5 rounded-full font-bold">0</span>
+        </div>
+        <div id="col-Pendente" class="kanban-col kanban-dropzone space-y-2 flex-grow rounded-lg p-1 transition" ondragover="handleDragOver(event)" ondragleave="handleDragLeave(event)" ondrop="handleDrop(event, 'Pendente')"></div>
+      </div>
+
+      <!-- COLUNA: EM CURSO -->
+      <div class="flex-1 bg-amber-50/80 rounded-xl p-3 flex flex-col border border-amber-200">
+        <div class="flex justify-between items-center mb-3">
+          <h2 class="font-bold text-amber-800 text-xs uppercase tracking-wider flex items-center gap-1.5">
+            <span>🚀</span> Em Curso
+          </h2>
+          <span id="count-Em Curso" class="bg-amber-200 text-amber-800 text-xs px-2 py-0.5 rounded-full font-bold">0</span>
+        </div>
+        <div id="col-Em Curso" class="kanban-col kanban-dropzone space-y-2 flex-grow rounded-lg p-1 transition" ondragover="handleDragOver(event)" ondragleave="handleDragLeave(event)" ondrop="handleDrop(event, 'Em Curso')"></div>
+      </div>
+
+      <!-- COLUNA: AGUARDAR TERCEIROS -->
+      <div class="flex-1 bg-blue-50/80 rounded-xl p-3 flex flex-col border border-blue-200">
+        <div class="flex justify-between items-center mb-3">
+          <h2 class="font-bold text-blue-800 text-xs uppercase tracking-wider flex items-center gap-1.5">
+            <span>🤝</span> Aguardar Terceiros
+          </h2>
+          <span id="count-A aguardar por terceiros" class="bg-blue-200 text-blue-800 text-xs px-2 py-0.5 rounded-full font-bold">0</span>
+        </div>
+        <div id="col-A aguardar por terceiros" class="kanban-col kanban-dropzone space-y-2 flex-grow rounded-lg p-1 transition" ondragover="handleDragOver(event)" ondragleave="handleDragLeave(event)" ondrop="handleDrop(event, 'A aguardar por terceiros')"></div>
+      </div>
+
+      <!-- COLUNA: CONCLUÍDO -->
+      <div class="flex-1 bg-emerald-50/80 rounded-xl p-3 flex flex-col border border-emerald-200">
+        <div class="flex justify-between items-center mb-3">
+          <h2 class="font-bold text-emerald-800 text-xs uppercase tracking-wider flex items-center gap-1.5">
+            <span>✅</span> Concluído
+          </h2>
+          <span id="count-Concluído" class="bg-emerald-200 text-emerald-800 text-xs px-2 py-0.5 rounded-full font-bold">0</span>
+        </div>
+        <div id="col-Concluído" class="kanban-col kanban-dropzone space-y-2 flex-grow rounded-lg p-1 transition" ondragover="handleDragOver(event)" ondragleave="handleDragLeave(event)" ondrop="handleDrop(event, 'Concluído')"></div>
+      </div>
+
+      <!-- COLUNA: CANCELADO -->
+      <div class="flex-1 bg-red-50/80 rounded-xl p-3 flex flex-col border border-red-200">
+        <div class="flex justify-between items-center mb-3">
+          <h2 class="font-bold text-red-800 text-xs uppercase tracking-wider flex items-center gap-1.5">
+            <span>🚫</span> Cancelado
+          </h2>
+          <span id="count-Cancelado" class="bg-red-200 text-red-800 text-xs px-2 py-0.5 rounded-full font-bold">0</span>
+        </div>
+        <div id="col-Cancelado" class="kanban-col kanban-dropzone space-y-2 flex-grow rounded-lg p-1 transition" ondragover="handleDragOver(event)" ondragleave="handleDragLeave(event)" ondrop="handleDrop(event, 'Cancelado')"></div>
+      </div>
+
+    </div>
+  </main>
+
+  <script>
+    
+    const API_URL = "https://script.google.com/macros/s/AKfycbw_Unni-QHjpMRT2gwPR8Q4MzmigHZ8gvrLS_jUU-AgAhU0jrsujQ1odl8e_eLV59T55Q/exec";
+
+    let currentProject = "";
+    let rawTasksData = [];
+    let draggedCardIndex = null;
+    let activeUserName = "Anónimo";
+
+    window.addEventListener("DOMContentLoaded", () => {
+        resolveUserAndProject();
+        fetchKanbanTasks();
+    });
+
+    // Função para detetar o utilizador e o projeto (via URL, localStorage ou Fallback)
+    function resolveUserAndProject() {
+        const urlParams = new URLSearchParams(window.location.search);
+        const urlUser = urlParams.get("user");
+        const urlProject = urlParams.get("project");
+
+        // 1. RESOLVER UTILIZADOR (Compatibilidade Total Firefox)
+        if (urlUser && urlUser.trim() !== "") {
+        activeUserName = decodeURIComponent(urlUser);
+        } else {
+        const simpleUser = localStorage.getItem("app_user_name");
+        if (simpleUser && simpleUser.trim() !== "") {
+            activeUserName = simpleUser;
+        } else {
+            const savedUserStr = localStorage.getItem("app_user");
+            if (savedUserStr) {
+            try {
+                const parsed = JSON.parse(savedUserStr);
+                activeUserName = parsed.nome || parsed.email || "Anónimo";
+            } catch(e) {
+                activeUserName = "Anónimo";
+            }
+            }
+        }
+        }
+
+        document.getElementById("kanban-logged-user").innerText = activeUserName;
+        localStorage.setItem("app_user_name", activeUserName);
+
+        // 2. RESOLVER PROJETO ATIVO
+        const savedProject = localStorage.getItem("app_active_project") || localStorage.getItem("kanban_active_project");
+        
+        if (urlProject && urlProject.trim() !== "") {
+        currentProject = decodeURIComponent(urlProject);
+        } else if (savedProject) {
+        currentProject = savedProject;
+        }
+
+        loadKanbanProjects();
+    }
+
+    function handleKanbanLogout() {
+        localStorage.removeItem("app_user");
+        localStorage.removeItem("app_user_name");
+        window.location.href = "index.html";
+    }
+
+    async function loadKanbanProjects() {
+        const select = document.getElementById("kanban-project-select");
+
+        try {
+        const response = await fetch(`${API_URL}?action=getProjects`, { redirect: "follow" });
+        const projects = await response.json();
+        select.innerHTML = "";
+
+        if (Array.isArray(projects) && projects.length > 0) {
+            projects.forEach(p => {
+            const opt = document.createElement("option");
+            opt.value = p; opt.innerText = p;
+            select.appendChild(opt);
+            });
+
+            if (currentProject && projects.includes(currentProject)) {
+            select.value = currentProject;
+            } else {
+            currentProject = projects[0];
+            select.value = currentProject;
+            }
+        } else {
+            select.innerHTML = '<option value="Folha1">Folha1</option>';
+            currentProject = "Folha1";
+        }
+        } catch (e) {
+        select.innerHTML = '<option value="Folha1">Folha1</option>';
+        currentProject = "Folha1";
+        }
+
+        localStorage.setItem("app_active_project", currentProject);
+        localStorage.setItem("kanban_active_project", currentProject);
+        document.getElementById("kanban-project-subtitle").innerText = `Projeto: ${currentProject}`;
+    }
+
+    function changeKanbanProject(proj) {
+        if (!proj) return;
+        currentProject = proj;
+        localStorage.setItem("app_active_project", currentProject);
+        localStorage.setItem("kanban_active_project", currentProject);
+        document.getElementById("kanban-project-subtitle").innerText = `Projeto: ${currentProject}`;
+        fetchKanbanTasks();
+    }
+
+    async function fetchKanbanTasks() {
+        const cols = ["Pendente", "Em Curso", "A aguardar por terceiros", "Concluído", "Cancelado"];
+        cols.forEach(c => document.getElementById(`col-${c}`).innerHTML = `<p class="text-center text-xs text-slate-400 py-4">A carregar...</p>`);
+
+        try {
+        const response = await fetch(`${API_URL}?project=${encodeURIComponent(currentProject)}`, { method: "GET", redirect: "follow" });
+        const resObj = await response.json();
+        rawTasksData = Array.isArray(resObj.tasks) ? resObj.tasks : (Array.isArray(resObj) ? resObj : []);
+        renderKanbanBoard();
+        } catch (err) {
+        alert("Erro ao carregar dados no Kanban.");
+        }
+    }
+
+    function renderKanbanBoard() {
+        const columns = {
+        "Pendente": document.getElementById("col-Pendente"),
+        "Em Curso": document.getElementById("col-Em Curso"),
+        "A aguardar por terceiros": document.getElementById("col-A aguardar por terceiros"),
+        "Concluído": document.getElementById("col-Concluído"),
+        "Cancelado": document.getElementById("col-Cancelado")
+        };
+
+        Object.keys(columns).forEach(k => {
+        columns[k].innerHTML = "";
+        document.getElementById(`count-${k}`).innerText = "0";
+        });
+
+        const counts = { "Pendente": 0, "Em Curso": 0, "A aguardar por terceiros": 0, "Concluído": 0, "Cancelado": 0 };
+
+        rawTasksData.forEach((item, index) => {
+        let prog = item.Progresso || item.progresso || "Pendente";
+        if (!columns[prog]) prog = "Pendente";
+
+        counts[prog]++;
+
+        const card = document.createElement("div");
+        card.className = "kanban-card bg-white p-3 rounded-lg shadow-sm border border-slate-200 hover:shadow-md transition space-y-2";
+        card.draggable = true;
+        card.dataset.index = index;
+
+        card.addEventListener("dragstart", () => {
+            draggedCardIndex = index;
+            card.classList.add("dragging");
+        });
+
+        card.addEventListener("dragend", () => {
+            card.classList.remove("dragging");
+            draggedCardIndex = null;
+        });
+
+        const tName = item.Tarefa || item.tarefa || "Sem nome";
+        const fase = item.Fase || item.fase || "Pré-evento";
+        const resp = item.Responsabilidade || item.responsabilidade || "";
+        const urg = item["Urgência / Importância"] || item["Urgência/ Importância"] || item.urgencia || "Normal";
+
+        let urgBadge = '<span class="text-[10px] text-slate-500">Normal</span>';
+        if (urg.includes("Urgente")) urgBadge = '<span class="text-[9px] bg-red-100 text-red-700 px-1.5 py-0.5 rounded font-bold">Urgente</span>';
+        else if (urg.includes("Importante")) urgBadge = '<span class="text-[9px] bg-blue-100 text-blue-700 px-1.5 py-0.5 rounded font-bold">Importante</span>';
+
+        card.innerHTML = `
+            <div class="flex justify-between items-start gap-1">
+            <span class="text-[10px] font-bold uppercase tracking-wider text-slate-400">${fase}</span>
+            ${urgBadge}
+            </div>
+            <p class="font-semibold text-xs text-slate-800 leading-snug">${tName}</p>
+            ${resp ? `<div class="text-[10px] text-slate-500 flex items-center gap-1">👤 ${resp}</div>` : ''}
+        `;
+
+        columns[prog].appendChild(card);
+        });
+
+        Object.keys(counts).forEach(k => {
+        document.getElementById(`count-${k}`).innerText = counts[k];
+        });
+    }
+
+    function handleDragOver(e) {
+        e.preventDefault();
+        e.currentTarget.classList.add("drag-over");
+    }
+
+    function handleDragLeave(e) {
+        e.currentTarget.classList.remove("drag-over");
+    }
+
+    async function handleDrop(e, newStatus) {
+        e.preventDefault();
+        e.currentTarget.classList.remove("drag-over");
+
+        if (draggedCardIndex === null || !rawTasksData[draggedCardIndex]) return;
+
+        const item = rawTasksData[draggedCardIndex];
+        const oldStatus = item.Progresso || item.progresso || "Pendente";
+
+        if (oldStatus === newStatus) return;
+
+        // Atualizar estado local
+        item.Progresso = newStatus;
+        item.progresso = newStatus;
+        renderKanbanBoard();
+
+        // Guardar alteração no Google Sheets com o utilizador garantido
+        const rowIndex = item.rowIndex || (draggedCardIndex + 2);
+        const custosArray = typeof item.Custos === "string" ? item.Custos : JSON.stringify(item.Custos || []);
+
+        const payload = {
+        projeto: currentProject,
+        rowIndex: rowIndex,
+        fase: item.Fase || item.fase || "Pré-evento",
+        tarefa: item.Tarefa || item.tarefa || "",
+        progresso: newStatus,
+        responsabilidade: item.Responsabilidade || item.responsabilidade || "",
+        instituicoes: item["Instituições / Contactos"] || item["Instituições/ empresas a contactar"] || item.instituicoes || "",
+        urgencia: item["Urgência / Importância"] || item["Urgência/ Importância"] || item.urgencia || "Normal",
+        dataInicio: item["Data de início"] || item["Data Início"] || item.dataInicio || "",
+        dataFim: item["Data de fim"] || item["Data Fim"] || item.dataFim || "",
+        notas: item.Notas || item.notas || "",
+        fotos: item.Fotos || item.fotos || "",
+        custos: custosArray,
+        currentUser: activeUserName
+        };
+
+        try {
+        await fetch(API_URL, {
+            method: "POST",
+            mode: "no-cors",
+            headers: { "Content-Type": "text/plain;charset=utf-8" },
+            body: JSON.stringify(payload)
+        });
+        } catch (err) {
+        alert("Erro ao atualizar o estado no servidor.");
+        fetchKanbanTasks();
+        }
+    }
+
+  </script>
+</body>
+</html>
