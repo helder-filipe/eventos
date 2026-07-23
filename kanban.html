@@ -123,141 +123,136 @@
   </main>
 
   <script>
-    
     const API_URL = "https://script.google.com/macros/s/AKfycbw_Unni-QHjpMRT2gwPR8Q4MzmigHZ8gvrLS_jUU-AgAhU0jrsujQ1odl8e_eLV59T55Q/exec";
 
     let currentProject = "";
     let rawTasksData = [];
     let draggedCardIndex = null;
     let activeUserName = "Anónimo";
+    let currentUser = null;
 
     window.addEventListener("DOMContentLoaded", () => {
-        resolveUserAndProject();
-        fetchKanbanTasks();
+      resolveUserAndProject();
     });
 
-    // Função para detetar o utilizador e o projeto (via URL, localStorage ou Fallback)
     function resolveUserAndProject() {
-        const urlParams = new URLSearchParams(window.location.search);
-        const urlUser = urlParams.get("user");
-        const urlProject = urlParams.get("project");
+      const urlParams = new URLSearchParams(window.location.search);
+      const urlUser = urlParams.get("user");
+      const urlProject = urlParams.get("project");
 
-        // 1. RESOLVER UTILIZADOR (Compatibilidade Total Firefox)
-        if (urlUser && urlUser.trim() !== "") {
+      // 1. Ler utilizador guardado na sessão
+      const savedUserStr = localStorage.getItem("app_user");
+      if (savedUserStr) {
+        try { currentUser = JSON.parse(savedUserStr); } catch(e){}
+      }
+
+      if (urlUser && urlUser.trim() !== "") {
         activeUserName = decodeURIComponent(urlUser);
-        } else {
-        const simpleUser = localStorage.getItem("app_user_name");
-        if (simpleUser && simpleUser.trim() !== "") {
-            activeUserName = simpleUser;
-        } else {
-            const savedUserStr = localStorage.getItem("app_user");
-            if (savedUserStr) {
-            try {
-                const parsed = JSON.parse(savedUserStr);
-                activeUserName = parsed.nome || parsed.email || "Anónimo";
-            } catch(e) {
-                activeUserName = "Anónimo";
-            }
-            }
-        }
-        }
+      } else if (currentUser) {
+        activeUserName = currentUser.nome || currentUser.email;
+      } else {
+        activeUserName = localStorage.getItem("app_user_name") || "Anónimo";
+      }
 
-        document.getElementById("kanban-logged-user").innerText = activeUserName;
-        localStorage.setItem("app_user_name", activeUserName);
+      document.getElementById("kanban-logged-user").innerText = activeUserName;
 
-        // 2. RESOLVER PROJETO ATIVO
-        const savedProject = localStorage.getItem("app_active_project") || localStorage.getItem("kanban_active_project");
-        
-        if (urlProject && urlProject.trim() !== "") {
+      // 2. Definir Projeto Ativo
+      const savedProject = localStorage.getItem("app_active_project") || localStorage.getItem("kanban_active_project");
+      if (urlProject && urlProject.trim() !== "") {
         currentProject = decodeURIComponent(urlProject);
-        } else if (savedProject) {
+      } else if (savedProject) {
         currentProject = savedProject;
-        }
+      }
 
-        loadKanbanProjects();
+      loadKanbanProjects();
     }
 
     function handleKanbanLogout() {
-        localStorage.removeItem("app_user");
-        localStorage.removeItem("app_user_name");
-        window.location.href = "index.html";
+      localStorage.removeItem("app_user");
+      localStorage.removeItem("app_user_name");
+      window.location.href = "index.html";
     }
 
     async function loadKanbanProjects() {
-        const select = document.getElementById("kanban-project-select");
+      const select = document.getElementById("kanban-project-select");
+      const user = currentUser ? (currentUser.email || currentUser.nome) : "";
+      const role = currentUser ? (currentUser.role || "guest") : "guest";
 
-        try {
-        const response = await fetch(`${API_URL}?action=getProjects`, { redirect: "follow" });
+      try {
+        // Envia user e role para filtrar os projetos no backend de acordo com as permissões do convidado
+        const response = await fetch(`${API_URL}?action=getProjects&user=${encodeURIComponent(user)}&role=${encodeURIComponent(role)}`, { redirect: "follow" });
         const projects = await response.json();
         select.innerHTML = "";
 
         if (Array.isArray(projects) && projects.length > 0) {
-            projects.forEach(p => {
+          projects.forEach(p => {
             const opt = document.createElement("option");
             opt.value = p; opt.innerText = p;
             select.appendChild(opt);
-            });
+          });
 
-            if (currentProject && projects.includes(currentProject)) {
+          if (currentProject && projects.includes(currentProject)) {
             select.value = currentProject;
-            } else {
+          } else {
             currentProject = projects[0];
             select.value = currentProject;
-            }
+          }
         } else {
-            select.innerHTML = '<option value="Folha1">Folha1</option>';
-            currentProject = "Folha1";
+          select.innerHTML = '<option value="">Sem projetos atribuídos</option>';
+          currentProject = "";
         }
-        } catch (e) {
+      } catch (e) {
         select.innerHTML = '<option value="Folha1">Folha1</option>';
         currentProject = "Folha1";
-        }
+      }
 
-        localStorage.setItem("app_active_project", currentProject);
-        localStorage.setItem("kanban_active_project", currentProject);
-        document.getElementById("kanban-project-subtitle").innerText = `Projeto: ${currentProject}`;
+      localStorage.setItem("app_active_project", currentProject);
+      localStorage.setItem("kanban_active_project", currentProject);
+      document.getElementById("kanban-project-subtitle").innerText = `Projeto: ${currentProject || "Nenhum"}`;
+      if (currentProject) fetchKanbanTasks();
     }
 
     function changeKanbanProject(proj) {
-        if (!proj) return;
-        currentProject = proj;
-        localStorage.setItem("app_active_project", currentProject);
-        localStorage.setItem("kanban_active_project", currentProject);
-        document.getElementById("kanban-project-subtitle").innerText = `Projeto: ${currentProject}`;
-        fetchKanbanTasks();
+      if (!proj) return;
+      currentProject = proj;
+      localStorage.setItem("app_active_project", currentProject);
+      localStorage.setItem("kanban_active_project", currentProject);
+      document.getElementById("kanban-project-subtitle").innerText = `Projeto: ${currentProject}`;
+      fetchKanbanTasks();
     }
 
     async function fetchKanbanTasks() {
-        const cols = ["Pendente", "Em Curso", "A aguardar por terceiros", "Concluído", "Cancelado"];
-        cols.forEach(c => document.getElementById(`col-${c}`).innerHTML = `<p class="text-center text-xs text-slate-400 py-4">A carregar...</p>`);
+      if (!currentProject) return;
+      const cols = ["Pendente", "Em Curso", "A aguardar por terceiros", "Concluído", "Cancelado"];
+      cols.forEach(c => document.getElementById(`col-${c}`).innerHTML = `<p class="text-center text-xs text-slate-400 py-4">A carregar...</p>`);
 
-        try {
+      try {
         const response = await fetch(`${API_URL}?project=${encodeURIComponent(currentProject)}`, { method: "GET", redirect: "follow" });
         const resObj = await response.json();
         rawTasksData = Array.isArray(resObj.tasks) ? resObj.tasks : (Array.isArray(resObj) ? resObj : []);
         renderKanbanBoard();
-        } catch (err) {
+      } catch (err) {
         alert("Erro ao carregar dados no Kanban.");
-        }
+      }
     }
 
     function renderKanbanBoard() {
-        const columns = {
+      const columns = {
         "Pendente": document.getElementById("col-Pendente"),
         "Em Curso": document.getElementById("col-Em Curso"),
         "A aguardar por terceiros": document.getElementById("col-A aguardar por terceiros"),
         "Concluído": document.getElementById("col-Concluído"),
         "Cancelado": document.getElementById("col-Cancelado")
-        };
+      };
 
-        Object.keys(columns).forEach(k => {
+      Object.keys(columns).forEach(k => {
         columns[k].innerHTML = "";
         document.getElementById(`count-${k}`).innerText = "0";
-        });
+      });
 
-        const counts = { "Pendente": 0, "Em Curso": 0, "A aguardar por terceiros": 0, "Concluído": 0, "Cancelado": 0 };
+      const counts = { "Pendente": 0, "Em Curso": 0, "A aguardar por terceiros": 0, "Concluído": 0, "Cancelado": 0 };
 
-        rawTasksData.forEach((item, index) => {
+      rawTasksData.forEach((item, index) => {
         let prog = item.Progresso || item.progresso || "Pendente";
         if (!columns[prog]) prog = "Pendente";
 
@@ -269,13 +264,13 @@
         card.dataset.index = index;
 
         card.addEventListener("dragstart", () => {
-            draggedCardIndex = index;
-            card.classList.add("dragging");
+          draggedCardIndex = index;
+          card.classList.add("dragging");
         });
 
         card.addEventListener("dragend", () => {
-            card.classList.remove("dragging");
-            draggedCardIndex = null;
+          card.classList.remove("dragging");
+          draggedCardIndex = null;
         });
 
         const tName = item.Tarefa || item.tarefa || "Sem nome";
@@ -288,52 +283,50 @@
         else if (urg.includes("Importante")) urgBadge = '<span class="text-[9px] bg-blue-100 text-blue-700 px-1.5 py-0.5 rounded font-bold">Importante</span>';
 
         card.innerHTML = `
-            <div class="flex justify-between items-start gap-1">
+          <div class="flex justify-between items-start gap-1">
             <span class="text-[10px] font-bold uppercase tracking-wider text-slate-400">${fase}</span>
             ${urgBadge}
-            </div>
-            <p class="font-semibold text-xs text-slate-800 leading-snug">${tName}</p>
-            ${resp ? `<div class="text-[10px] text-slate-500 flex items-center gap-1">👤 ${resp}</div>` : ''}
+          </div>
+          <p class="font-semibold text-xs text-slate-800 leading-snug">${tName}</p>
+          ${resp ? `<div class="text-[10px] text-slate-500 flex items-center gap-1">👤 ${resp}</div>` : ''}
         `;
 
         columns[prog].appendChild(card);
-        });
+      });
 
-        Object.keys(counts).forEach(k => {
+      Object.keys(counts).forEach(k => {
         document.getElementById(`count-${k}`).innerText = counts[k];
-        });
+      });
     }
 
     function handleDragOver(e) {
-        e.preventDefault();
-        e.currentTarget.classList.add("drag-over");
+      e.preventDefault();
+      e.currentTarget.classList.add("drag-over");
     }
 
     function handleDragLeave(e) {
-        e.currentTarget.classList.remove("drag-over");
+      e.currentTarget.classList.remove("drag-over");
     }
 
     async function handleDrop(e, newStatus) {
-        e.preventDefault();
-        e.currentTarget.classList.remove("drag-over");
+      e.preventDefault();
+      e.currentTarget.classList.remove("drag-over");
 
-        if (draggedCardIndex === null || !rawTasksData[draggedCardIndex]) return;
+      if (draggedCardIndex === null || !rawTasksData[draggedCardIndex]) return;
 
-        const item = rawTasksData[draggedCardIndex];
-        const oldStatus = item.Progresso || item.progresso || "Pendente";
+      const item = rawTasksData[draggedCardIndex];
+      const oldStatus = item.Progresso || item.progresso || "Pendente";
 
-        if (oldStatus === newStatus) return;
+      if (oldStatus === newStatus) return;
 
-        // Atualizar estado local
-        item.Progresso = newStatus;
-        item.progresso = newStatus;
-        renderKanbanBoard();
+      item.Progresso = newStatus;
+      item.progresso = newStatus;
+      renderKanbanBoard();
 
-        // Guardar alteração no Google Sheets com o utilizador garantido
-        const rowIndex = item.rowIndex || (draggedCardIndex + 2);
-        const custosArray = typeof item.Custos === "string" ? item.Custos : JSON.stringify(item.Custos || []);
+      const rowIndex = item.rowIndex || (draggedCardIndex + 2);
+      const custosArray = typeof item.Custos === "string" ? item.Custos : JSON.stringify(item.Custos || []);
 
-        const payload = {
+      const payload = {
         projeto: currentProject,
         rowIndex: rowIndex,
         fase: item.Fase || item.fase || "Pré-evento",
@@ -348,21 +341,20 @@
         fotos: item.Fotos || item.fotos || "",
         custos: custosArray,
         currentUser: activeUserName
-        };
+      };
 
-        try {
+      try {
         await fetch(API_URL, {
-            method: "POST",
-            mode: "no-cors",
-            headers: { "Content-Type": "text/plain;charset=utf-8" },
-            body: JSON.stringify(payload)
+          method: "POST",
+          mode: "no-cors",
+          headers: { "Content-Type": "text/plain;charset=utf-8" },
+          body: JSON.stringify(payload)
         });
-        } catch (err) {
+      } catch (err) {
         alert("Erro ao atualizar o estado no servidor.");
         fetchKanbanTasks();
-        }
+      }
     }
-
   </script>
 </body>
 </html>

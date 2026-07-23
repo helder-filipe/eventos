@@ -139,7 +139,7 @@
 </head>
 <body class="bg-slate-50 text-slate-800 min-h-screen flex flex-col">
 
-  <!-- AUTH SCREEN (LOGIN / REGISTO) -->
+  <!-- AUTH SCREEN (APENAS LOGIN RESTRITO) -->
   <div id="auth-screen" class="fixed inset-0 bg-slate-900/80 backdrop-blur-md flex items-center justify-center p-4 z-50">
     <div class="bg-white rounded-2xl shadow-2xl w-full max-w-md overflow-hidden border border-slate-100">
       
@@ -155,8 +155,8 @@
         <!-- FORMULARIO LOGIN -->
         <form id="login-form" onsubmit="handleLogin(event)" class="space-y-4">
           <div>
-            <label class="block text-xs font-semibold text-slate-600 uppercase mb-1">Email</label>
-            <input type="email" id="login-email" required placeholder="o.teu.email@empresa.pt" class="w-full border border-slate-300 rounded-lg p-2.5 text-sm focus:ring-2 focus:ring-emerald-500 outline-none">
+            <label class="block text-xs font-semibold text-slate-600 uppercase mb-1">Utilizador / Email</label>
+            <input type="text" id="login-email" required placeholder="helder" class="w-full border border-slate-300 rounded-lg p-2.5 text-sm focus:ring-2 focus:ring-emerald-500 outline-none">
           </div>
           <div>
             <label class="block text-xs font-semibold text-slate-600 uppercase mb-1">Palavra-passe</label>
@@ -166,34 +166,6 @@
           <button type="submit" id="login-btn" class="w-full bg-emerald-700 hover:bg-emerald-600 text-white font-semibold py-2.5 rounded-lg text-sm transition shadow-sm">
             Entrar
           </button>
-
-          <p class="text-center text-xs text-slate-500 pt-2">
-            Ainda não tens conta? <button type="button" onclick="toggleAuthMode('register')" class="text-emerald-700 font-bold hover:underline">Registar agora</button>
-          </p>
-        </form>
-
-        <!-- FORMULARIO REGISTO -->
-        <form id="register-form" onsubmit="handleRegister(event)" class="space-y-4 hidden">
-          <div>
-            <label class="block text-xs font-semibold text-slate-600 uppercase mb-1">Nome Completo</label>
-            <input type="text" id="reg-nome" required placeholder="Ex: Hélder Filipe" class="w-full border border-slate-300 rounded-lg p-2.5 text-sm focus:ring-2 focus:ring-emerald-500 outline-none">
-          </div>
-          <div>
-            <label class="block text-xs font-semibold text-slate-600 uppercase mb-1">Email</label>
-            <input type="email" id="reg-email" required placeholder="o.teu.email@empresa.pt" class="w-full border border-slate-300 rounded-lg p-2.5 text-sm focus:ring-2 focus:ring-emerald-500 outline-none">
-          </div>
-          <div>
-            <label class="block text-xs font-semibold text-slate-600 uppercase mb-1">Palavra-passe</label>
-            <input type="password" id="reg-password" required placeholder="••••••••" class="w-full border border-slate-300 rounded-lg p-2.5 text-sm focus:ring-2 focus:ring-emerald-500 outline-none">
-          </div>
-
-          <button type="submit" id="register-btn" class="w-full bg-emerald-700 hover:bg-emerald-600 text-white font-semibold py-2.5 rounded-lg text-sm transition shadow-sm">
-            Criar Conta
-          </button>
-
-          <p class="text-center text-xs text-slate-500 pt-2">
-            Já tens conta? <button type="button" onclick="toggleAuthMode('login')" class="text-emerald-700 font-bold hover:underline">Iniciar Sessão</button>
-          </p>
         </form>
       </div>
 
@@ -216,11 +188,18 @@
         </div>
 
         <div class="flex flex-col sm:flex-row items-stretch sm:items-center gap-3 w-full lg:w-auto">
-          <!-- User Badge & Logout -->
+          <!-- User Badge, Password e Logout -->
           <div class="flex items-center justify-between sm:justify-start gap-2 bg-emerald-900/80 px-3 py-1.5 rounded-lg border border-emerald-700/60 text-xs">
             <span class="text-emerald-100 flex items-center gap-1">👤 <strong id="logged-user-name">Utilizador</strong></span>
-            <button onclick="handleLogout()" class="text-amber-300 hover:text-white font-bold ml-2 underline">Sair</button>
+            <span id="logged-role-badge" class="bg-emerald-700 text-[10px] px-1.5 py-0.5 rounded uppercase font-semibold">ADMIN</span>
+            <button onclick="openChangePassModal()" class="text-amber-300 hover:text-white underline ml-1 text-[11px]">Password</button>
+            <button onclick="handleLogout()" class="text-red-300 hover:text-white font-bold ml-2 underline">Sair</button>
           </div>
+
+          <!-- Botão Gerir Convidados (Apenas Admin) -->
+          <button id="btn-manage-guests" onclick="openGuestsModal()" class="hidden bg-indigo-700 hover:bg-indigo-600 text-white text-xs font-semibold px-3 py-2 rounded-lg shadow-sm transition">
+            👥 Gerir Convidados
+          </button>
 
           <div class="flex items-center gap-2 bg-emerald-900/60 p-1.5 rounded-lg border border-emerald-700/50">
             <label for="project-select" class="text-xs font-semibold text-emerald-200 uppercase px-1 whitespace-nowrap">Projeto:</label>
@@ -228,11 +207,11 @@
               <option value="">A carregar...</option>
             </select>
             
-            <button onclick="openProjectModal()" title="Criar novo projeto do zero" class="bg-emerald-700 hover:bg-emerald-600 text-white p-1.5 rounded-md text-xs font-semibold transition px-2.5 whitespace-nowrap">
+            <button id="btn-create-proj" onclick="openProjectModal()" title="Criar novo projeto do zero" class="bg-emerald-700 hover:bg-emerald-600 text-white p-1.5 rounded-md text-xs font-semibold transition px-2.5 whitespace-nowrap">
               + Novo
             </button>
 
-            <button onclick="openDuplicateModal()" title="Replicar a estrutura deste projeto" class="bg-amber-600 hover:bg-amber-500 text-white p-1.5 rounded-md text-xs font-semibold transition px-2.5 whitespace-nowrap">
+            <button id="btn-duplicate-proj" onclick="openDuplicateModal()" title="Replicar a estrutura deste projeto" class="bg-amber-600 hover:bg-amber-500 text-white p-1.5 rounded-md text-xs font-semibold transition px-2.5 whitespace-nowrap">
               📋 Replicar
             </button>
           </div>
@@ -477,7 +456,67 @@
 
   </div>
 
-  <!-- MODAIS -->
+  <!-- MODAL: GERIR CONVIDADOS (EXCLUSIVO ADMIN) -->
+  <div id="modal-guests" class="fixed inset-0 bg-slate-900/60 backdrop-blur-sm z-50 hidden flex items-center justify-center p-4">
+    <div class="bg-white rounded-xl shadow-2xl max-w-xl w-full p-6 border border-slate-200 max-h-[90vh] flex flex-col">
+      <div class="flex justify-between items-center pb-3 border-b mb-4">
+        <h3 class="font-bold text-slate-800 text-base">👥 Gestão de Contas de Convidados</h3>
+        <button onclick="closeGuestsModal()" class="text-slate-400 hover:text-slate-600 font-bold text-lg">&times;</button>
+      </div>
+
+      <!-- Formulário de Adicionar / Editar Convidado -->
+      <form id="guest-form" onsubmit="handleSaveGuest(event)" class="space-y-3 mb-6 bg-slate-50 p-3.5 rounded-lg border">
+        <h4 class="font-bold text-xs text-slate-700 uppercase">Criar / Atualizar Convidado</h4>
+        <div class="grid grid-cols-1 sm:grid-cols-3 gap-2">
+          <input type="text" id="guest-nome" required placeholder="Nome Ex: Maria" class="text-xs p-2 border rounded">
+          <input type="text" id="guest-user" required placeholder="Username Ex: maria" class="text-xs p-2 border rounded">
+          <input type="password" id="guest-pass" placeholder="Password inicial" class="text-xs p-2 border rounded">
+        </div>
+        <div>
+          <label class="block text-[11px] font-bold text-slate-600 mb-1">Projetos Permitidos:</label>
+          <div id="guest-projects-checkboxes" class="flex flex-wrap gap-2 max-h-24 overflow-y-auto p-2 bg-white rounded border">
+            <!-- Gerado via JS -->
+          </div>
+        </div>
+        <button type="submit" class="bg-indigo-700 hover:bg-indigo-800 text-white font-bold text-xs px-3 py-1.5 rounded transition">
+          💾 Guardar Convidado
+        </button>
+      </form>
+
+      <!-- Lista de Convidados Existentes -->
+      <h4 class="font-bold text-xs text-slate-700 uppercase mb-2">Convidados Ativos</h4>
+      <div class="overflow-y-auto flex-grow max-h-48 border rounded-lg divide-y">
+        <table class="w-full text-left text-xs">
+          <thead class="bg-slate-100 font-bold text-slate-600">
+            <tr>
+              <th class="p-2">Nome / User</th>
+              <th class="p-2">Projetos Atribuídos</th>
+              <th class="p-2 text-center">Ações</th>
+            </tr>
+          </thead>
+          <tbody id="guests-tbody">
+            <tr><td colspan="3" class="p-3 text-center text-slate-400">A carregar convidados...</td></tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
+  </div>
+
+  <!-- MODAL: ALTERAR PASSWORD -->
+  <div id="modal-changepass" class="fixed inset-0 bg-slate-900/60 backdrop-blur-sm z-50 hidden flex items-center justify-center p-4">
+    <div class="bg-white rounded-xl shadow-2xl max-w-sm w-full p-5 border border-slate-200">
+      <h3 class="font-bold text-slate-800 text-sm mb-3">🔑 Alterar Palavra-passe</h3>
+      <form onsubmit="handleChangePassword(event)" class="space-y-3">
+        <input type="password" id="new-password-input" required placeholder="Nova Palavra-passe" class="w-full text-xs p-2.5 border rounded-lg">
+        <div class="flex justify-end gap-2">
+          <button type="button" onclick="closeChangePassModal()" class="px-3 py-1.5 text-xs text-slate-600">Cancelar</button>
+          <button type="submit" class="bg-emerald-700 text-white text-xs font-bold px-3 py-1.5 rounded-lg">Guardar</button>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  <!-- MODAIS DO SISTEMA -->
   <div id="project-modal" class="fixed inset-0 bg-slate-900/50 backdrop-blur-sm hidden flex items-center justify-center p-4 z-50 no-print">
     <div class="bg-white rounded-2xl shadow-2xl w-full max-w-md overflow-hidden">
       <div class="bg-slate-50 px-6 py-4 border-b border-slate-200 flex justify-between items-center">
@@ -622,13 +661,14 @@
     </div>
   </div>
 
-  <!-- LÓGICA JAVASCRIPT -->
+  <!-- LÓGICA JAVASCRIPT INTEGRADA -->
   <script>
     const API_URL = "https://script.google.com/macros/s/AKfycbw_Unni-QHjpMRT2gwPR8Q4MzmigHZ8gvrLS_jUU-AgAhU0jrsujQ1odl8e_eLV59T55Q/exec";
 
     let currentUser = null;
     let currentProject = "";
     let rawTasksData = [];
+    let availableProjects = [];
     let selectedKpiFilter = "todos";
 
     let draggedRow = null;
@@ -645,16 +685,6 @@
       }
     });
 
-    function toggleAuthMode(mode) {
-      if (mode === 'register') {
-        document.getElementById("login-form").classList.add("hidden");
-        document.getElementById("register-form").classList.remove("hidden");
-      } else {
-        document.getElementById("register-form").classList.add("hidden");
-        document.getElementById("login-form").classList.remove("hidden");
-      }
-    }
-
     async function handleLogin(e) {
       e.preventDefault();
       const btn = document.getElementById("login-btn");
@@ -666,13 +696,14 @@
       try {
         const response = await fetch(API_URL, {
           method: "POST",
-          body: JSON.stringify({ action: "login", email: email, password: pass })
+          body: JSON.stringify({ action: "login", username: email, email: email, password: pass })
         });
         const res = await response.json();
 
-        if (res.result === "success") {
+        if (res.result === "success" || res.success) {
           currentUser = res.user;
           localStorage.setItem("app_user", JSON.stringify(currentUser));
+          localStorage.setItem("app_user_name", currentUser.nome || currentUser.email);
           showAppScreen();
         } else {
           alert(res.message || "Erro ao efetuar login.");
@@ -684,60 +715,48 @@
       }
     }
 
-    async function handleRegister(e) {
-      e.preventDefault();
-      const btn = document.getElementById("register-btn");
-      btn.disabled = true; btn.innerText = "A criar conta...";
-
-      const nome = document.getElementById("reg-nome").value;
-      const email = document.getElementById("reg-email").value;
-      const pass = document.getElementById("reg-password").value;
-
-      try {
-        const response = await fetch(API_URL, {
-          method: "POST",
-          body: JSON.stringify({ action: "register", nome: nome, email: email, password: pass })
-        });
-        const res = await response.json();
-
-        if (res.result === "success") {
-          currentUser = res.user;
-          localStorage.setItem("app_user", JSON.stringify(currentUser));
-          showAppScreen();
-        } else {
-          alert(res.message || "Erro ao registar.");
-        }
-      } catch (err) {
-        alert("Erro de ligação ao servidor.");
-      } finally {
-        btn.disabled = false; btn.innerText = "Criar Conta";
-      }
-    }
-
     function handleLogout() {
       localStorage.removeItem("app_user");
+      localStorage.removeItem("app_user_name");
       currentUser = null;
       document.getElementById("app-screen").classList.add("hidden");
       document.getElementById("auth-screen").classList.remove("hidden");
     }
 
-    // Adiciona esta função no <script> do index.html
     function openKanbanView() {
       const userName = currentUser ? (currentUser.nome || currentUser.email) : "";
       const url = `kanban.html?project=${encodeURIComponent(currentProject)}&user=${encodeURIComponent(userName)}`;
       window.location.href = url;
     }
 
-    // Atualiza a tua função showAppScreen para guardar também a chave em texto simples
     function showAppScreen() {
       document.getElementById("auth-screen").classList.add("hidden");
       document.getElementById("app-screen").classList.remove("hidden");
       
-      const userName = currentUser.nome || currentUser.email;
-      document.getElementById("logged-user-name").innerText = userName;
+      // Garantir que currentUser tem estrutura válida
+      if (!currentUser) {
+        currentUser = { nome: "Hélder Filipe", email: "heldgomes@gmail.com", role: "admin" };
+      }
 
-      // Guardar fallback em texto simples (infalível no Firefox)
+      const userName = currentUser.nome || currentUser.email || "Utilizador";
+      const role = currentUser.role || "admin";
+
+      document.getElementById("logged-user-name").innerText = userName;
+      document.getElementById("logged-role-badge").innerText = role.toUpperCase();
+
+      // Guardar fallback no localStorage
       localStorage.setItem("app_user_name", userName);
+
+      // Visibilidade de Botões por Permissão
+      if (role === "admin") {
+        document.getElementById("btn-manage-guests")?.classList.remove("hidden");
+        document.getElementById("btn-create-proj")?.classList.remove("hidden");
+        document.getElementById("btn-duplicate-proj")?.classList.remove("hidden");
+      } else {
+        document.getElementById("btn-manage-guests")?.classList.add("hidden");
+        document.getElementById("btn-create-proj")?.classList.add("hidden");
+        document.getElementById("btn-duplicate-proj")?.classList.add("hidden");
+      }
 
       const savedProject = localStorage.getItem("app_active_project");
       loadProjects(savedProject).then(() => {
@@ -778,37 +797,53 @@
     async function loadProjects(selectProjectName = null) {
       const select = document.getElementById("project-select");
       
+      // Extrair credenciais em segurança
+      const user = currentUser ? (currentUser.email || currentUser.nome || "") : "";
+      const role = currentUser ? (currentUser.role || "admin") : "admin";
+
       try {
-        const response = await fetch(`${API_URL}?action=getProjects`, { redirect: "follow" });
+        const fetchUrl = `${API_URL}?action=getProjects&user=${encodeURIComponent(user)}&role=${encodeURIComponent(role)}`;
+        const response = await fetch(fetchUrl, { method: "GET", redirect: "follow" });
         const projects = await response.json();
 
+        availableProjects = Array.isArray(projects) ? projects : [];
         select.innerHTML = "";
 
-        if (Array.isArray(projects) && projects.length > 0) {
-          projects.forEach(p => {
+        if (availableProjects.length > 0) {
+          availableProjects.forEach(p => {
             const opt = document.createElement("option");
-            opt.value = p; opt.innerText = p;
+            opt.value = p; 
+            opt.innerText = p;
             select.appendChild(opt);
           });
-          currentProject = selectProjectName && projects.includes(selectProjectName) ? selectProjectName : projects[0];
+
+          // Selecionar o projeto pretendido ou o primeiro da lista
+          if (selectProjectName && availableProjects.includes(selectProjectName)) {
+            currentProject = selectProjectName;
+          } else if (availableProjects.length > 0) {
+            currentProject = availableProjects[0];
+          }
           select.value = currentProject;
         } else {
-          select.innerHTML = '<option value="Folha1">Folha1</option>';
-          currentProject = "Folha1";
+          select.innerHTML = '<option value="">Sem projetos disponíveis</option>';
+          currentProject = "";
         }
       } catch (err) {
+        console.error("Erro ao carregar projetos:", err);
         select.innerHTML = '<option value="Folha1">Folha1</option>';
         currentProject = "Folha1";
       }
 
       updateUIProjectName();
-      fetchTasks();
+      if (currentProject) {
+        fetchTasks();
+      }
     }
 
     function changeProject(project) {
       if (!project) return;
       currentProject = project;
-      localStorage.setItem("app_active_project", currentProject); // Guarda para o Kanban e refreshes
+      localStorage.setItem("app_active_project", currentProject);
       updateUIProjectName();
       fetchTasks();
     }
@@ -825,6 +860,7 @@
     }
 
     async function fetchTasks() {
+      if (!currentProject) return;
       const tbody = document.getElementById("task-list");
       const refreshIcon = document.getElementById("refresh-icon");
       if (refreshIcon) refreshIcon.classList.add("animate-spin");
@@ -879,7 +915,6 @@
       insts.forEach(i => instSelect.innerHTML += `<option value="${i}">${i}</option>`);
     }
 
-    // LÓGICA DE ORDENAÇÃO POR CLIQUE NO CABEÇALHO DA COLUNA
     function sortByColumn(columnKey) {
       if (currentSortColumn === columnKey) {
         isSortAscending = !isSortAscending;
@@ -888,7 +923,6 @@
         isSortAscending = true;
       }
 
-      // Atualizar ícones das colunas
       document.querySelectorAll(".sort-icon").forEach(el => el.innerText = "↕");
       const activeIcon = document.getElementById(`sort-icon-${columnKey}`);
       if (activeIcon) {
@@ -1000,29 +1034,22 @@
       const resp = item.Responsabilidade || item.responsabilidade || "";
       const inst = item["Instituições / Contactos"] || item["Instituições/ empresas a contactar"] || item.instituicoes || "";
 
-      // Construir corpo dos detalhes
       let details = `Projeto: ${currentProject}\n`;
       if (resp) details += `Responsável: ${resp}\n`;
       if (inst) details += `Contactos/Parceiros: ${inst}\n`;
       if (notas) details += `\nNotas:\n${notas}`;
 
-      // Verificar se existe pelo menos uma data
       if (startStr || endStr) {
         const outlookUrl = new URL("https://outlook.office.com/calendar/0/deeplink/compose");
 
-        // CASO 1: Tem Data de Início E Data de Fim diferentes -> Compromisso com horário (09:00 às 18:00)
         if (startStr && endStr && startStr !== endStr) {
           const startIso = `${startStr.split("T")[0]}T09:00:00`;
           const endIso = `${endStr.split("T")[0]}T18:00:00`;
-          
           outlookUrl.searchParams.set("startdt", startIso);
           outlookUrl.searchParams.set("enddt", endIso);
           outlookUrl.searchParams.set("allday", "false");
-        } 
-        // CASO 2: Tem apenas uma data (Data de Fim ou Início) -> Evento de Dia Inteiro no Outlook
-        else {
+        } else {
           const targetDate = (endStr || startStr).split("T")[0];
-          
           outlookUrl.searchParams.set("startdt", targetDate);
           outlookUrl.searchParams.set("enddt", targetDate);
           outlookUrl.searchParams.set("allday", "true");
@@ -1033,8 +1060,7 @@
         if (resp) outlookUrl.searchParams.set("location", resp);
 
         window.open(outlookUrl.toString(), "_blank");
-      } 
-      else {
+      } else {
         alert("Para exportar para o Outlook, por favor define pelo menos uma Data de Início ou Fim nesta tarefa.");
       }
     }
@@ -1048,6 +1074,8 @@
         tbody.innerHTML = `<tr><td colspan="14" class="text-center p-8 text-slate-400">Nenhuma tarefa encontrada.</td></tr>`;
         return;
       }
+
+      const isAdmin = currentUser && currentUser.role === "admin";
 
       data.forEach((item, index) => {
         const row = document.createElement("tr");
@@ -1161,7 +1189,9 @@
         const realIndex = rawTasksData.indexOf(item);
         const outlookBtn = `<button onclick="openInOutlook(${realIndex})" class="bg-slate-100 hover:bg-sky-50 text-sky-600 hover:text-sky-700 border border-slate-200 rounded px-1.5 py-1 text-[11px] font-medium transition" title="Abrir no Outlook">📅</button>`;
         const editBtn = `<button onclick="editTask(${realIndex})" class="bg-slate-100 hover:bg-emerald-50 text-slate-600 hover:text-emerald-700 border border-slate-200 rounded px-1.5 py-1 text-[11px] font-medium transition" title="Editar">✏️</button>`;
-        const deleteBtn = `<button onclick="deleteTask(${realIndex})" class="bg-slate-100 hover:bg-red-50 text-slate-600 hover:text-red-700 border border-slate-200 rounded px-1.5 py-1 text-[11px] font-medium transition" title="Apagar">🗑️</button>`;
+        
+        // Botão Eliminar Apenas para ADMIN
+        const deleteBtn = isAdmin ? `<button onclick="deleteTask(${realIndex})" class="bg-slate-100 hover:bg-red-50 text-slate-600 hover:text-red-700 border border-slate-200 rounded px-1.5 py-1 text-[11px] font-medium transition" title="Apagar">🗑️</button>` : '';
 
         row.innerHTML = `
           ${dragHandle}
@@ -1643,6 +1673,108 @@
         submitBtn.disabled = false;
         submitBtn.innerHTML = `<span id="submit-btn-text">Guardar Tarefa</span>`;
       }
+    }
+
+    // LÓGICA DO MODAL DE GERIR CONVIDADOS
+    async function openGuestsModal() {
+      document.getElementById("modal-guests").classList.remove("hidden");
+      
+      const container = document.getElementById("guest-projects-checkboxes");
+      container.innerHTML = "";
+      availableProjects.forEach(p => {
+        container.innerHTML += `
+          <label class="flex items-center gap-1 text-xs bg-slate-100 px-2 py-1 rounded border cursor-pointer">
+            <input type="checkbox" name="guest_proj" value="${p}"> ${p}
+          </label>
+        `;
+      });
+
+      fetchGuestsList();
+    }
+
+    function closeGuestsModal() {
+      document.getElementById("modal-guests").classList.add("hidden");
+    }
+
+    async function fetchGuestsList() {
+      const tbody = document.getElementById("guests-tbody");
+      tbody.innerHTML = '<tr><td colspan="3" class="p-3 text-center text-slate-400">A carregar...</td></tr>';
+
+      try {
+        const resp = await fetch(`${API_URL}?action=getUsers`);
+        const guests = await resp.json();
+        tbody.innerHTML = "";
+
+        if (Array.isArray(guests) && guests.length > 0) {
+          guests.forEach(g => {
+            const tr = document.createElement("tr");
+            tr.className = "border-b text-xs";
+            tr.innerHTML = `
+              <td class="p-2 font-semibold">${g.nome} <span class="text-slate-400">(${g.email})</span></td>
+              <td class="p-2">${(g.projects || []).join(", ") || "Nenhum"}</td>
+              <td class="p-2 text-center">
+                <button onclick="deleteGuest('${g.email}')" class="text-red-600 hover:underline font-bold">Eliminar</button>
+              </td>
+            `;
+            tbody.appendChild(tr);
+          });
+        } else {
+          tbody.innerHTML = '<tr><td colspan="3" class="p-3 text-center text-slate-400">Sem convidados criados.</td></tr>';
+        }
+      } catch(e){}
+    }
+
+    async function handleSaveGuest(e) {
+      e.preventDefault();
+      const nome = document.getElementById("guest-nome").value;
+      const user = document.getElementById("guest-user").value;
+      const pass = document.getElementById("guest-pass").value;
+
+      const checkedProjs = Array.from(document.querySelectorAll('input[name="guest_proj"]:checked')).map(cb => cb.value);
+
+      try {
+        await fetch(API_URL, {
+          method: "POST",
+          headers: { "Content-Type": "text/plain;charset=utf-8" },
+          body: JSON.stringify({ action: "saveGuest", nome: nome, username: user, password: pass, projects: checkedProjs })
+        });
+        document.getElementById("guest-form").reset();
+        fetchGuestsList();
+      } catch(err) {
+        alert("Erro ao guardar convidado.");
+      }
+    }
+
+    async function deleteGuest(user) {
+      if (!confirm(`Tem a certeza que pretende eliminar o convidado ${user}?`)) return;
+      try {
+        await fetch(API_URL, {
+          method: "POST",
+          headers: { "Content-Type": "text/plain;charset=utf-8" },
+          body: JSON.stringify({ action: "deleteGuest", username: user })
+        });
+        fetchGuestsList();
+      } catch(e){}
+    }
+
+    // ALTERAR PALAVRA PASSE
+    function openChangePassModal() { document.getElementById("modal-changepass").classList.remove("hidden"); }
+    function closeChangePassModal() { document.getElementById("modal-changepass").classList.add("hidden"); }
+
+    async function handleChangePassword(e) {
+      e.preventDefault();
+      const newPass = document.getElementById("new-password-input").value;
+      const u = currentUser ? (currentUser.email || currentUser.nome) : "";
+
+      try {
+        await fetch(API_URL, {
+          method: "POST",
+          headers: { "Content-Type": "text/plain;charset=utf-8" },
+          body: JSON.stringify({ action: "changePassword", username: u, newPassword: newPass })
+        });
+        alert("Palavra-passe alterada com sucesso!");
+        closeChangePassModal();
+      } catch(err) { alert("Erro ao alterar palavra-passe."); }
     }
 
     function closeModal() { document.getElementById("modal").classList.add("hidden"); }
