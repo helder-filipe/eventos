@@ -1534,20 +1534,31 @@
     async function deleteTask(index) {
       if (index === undefined || index === null || index < 0) return;
       
-      if (!confirm("Tem a certeza que deseja apagar esta tarefa?")) return;
+      const item = rawTasksData[index];
+      if (!item) return;
+
+      // Utiliza o rowIndex real da folha de cálculo (se não existir, calcula com base na posição + 2)
+      const realRowIndex = item.rowIndex || (index + 2);
+
+      if (!confirm(`Tem a certeza que deseja apagar a tarefa "${item.Tarefa || item.tarefa || ''}"?`)) return;
 
       try {
-        // Ajustar o índice para a linha real do Google Sheets (+2 considera o cabeçalho)
-        const rowIndex = index + 2; 
-        const fetchUrl = `${API_URL}?action=deleteTask&project=${encodeURIComponent(currentProject)}&rowIndex=${rowIndex}`;
+        const response = await fetch(API_URL, {
+          method: "POST",
+          headers: { "Content-Type": "text/plain;charset=utf-8" },
+          body: JSON.stringify({
+            action: "deleteTask",
+            projeto: currentProject,
+            rowIndex: realRowIndex
+          })
+        });
         
-        const response = await fetch(fetchUrl, { method: "POST" });
         const res = await response.json();
 
         if (res.result === "success" || res.status === "success") {
-          fetchTasks(); // Recarrega a lista
+          fetchTasks(); // Recarrega a lista atualizada
         } else {
-          alert("Erro ao apagar tarefa: " + (res.message || "Tente novamente."));
+          alert("Erro ao apagar tarefa: " + (res.message || res.error || "Tente novamente."));
         }
       } catch (err) {
         console.error("Erro ao apagar:", err);
