@@ -175,70 +175,96 @@
   <!-- MAIN APPLICATION CONTENT -->
   <div id="app-screen" class="hidden min-h-screen flex flex-col">
     
-    <!-- Header Section -->
+    <!-- Header Section Reestruturado em 2 Linhas -->
     <header class="bg-emerald-800 text-white shadow-md border-b border-emerald-900">
-      <div class="max-w-[98vw] mx-auto px-2 sm:px-4 py-4 flex flex-col lg:flex-row justify-between items-start lg:items-center gap-4">
+      <div class="w-full px-3 sm:px-4 py-3 space-y-3">
         
-        <div>
-          <div class="flex items-center gap-2">
-            <span class="text-2xl">📁</span>
-            <h1 class="text-xl sm:text-2xl font-bold tracking-tight">Plataforma de Projetos</h1>
+        <!-- LINHA SUPERIOR: Título da Aplicação & Perfil/Sessão -->
+        <div class="flex flex-col md:flex-row justify-between items-start md:items-center gap-3 border-b border-emerald-700/60 pb-2.5">
+          
+          <!-- Identidade / Título -->
+          <div class="flex items-center gap-3">
+            <span class="text-3xl bg-emerald-900/80 p-2 rounded-xl border border-emerald-700/50 shadow-inner">📁</span>
+            <div>
+              <h1 class="text-lg sm:text-xl font-bold tracking-tight text-white flex items-center gap-2">
+                Plataforma de Projetos
+              </h1>
+              <p class="text-emerald-200 text-xs font-medium">Gestão de Ações, Cronograma & Gantt</p>
+            </div>
           </div>
-          <p class="text-emerald-200 text-xs mt-0.5">Gestão de Ações, Cronograma & Gantt</p>
+
+          <!-- Área do Utilizador & Gestão de Acessos -->
+          <div class="flex flex-wrap items-center gap-2.5 w-full md:w-auto justify-between md:justify-end">
+            <!-- User Badge, Password e Logout -->
+            <div class="flex items-center gap-2 bg-emerald-900/90 px-3 py-1.5 rounded-lg border border-emerald-700/70 text-xs shadow-sm">
+              <span class="text-emerald-100 flex items-center gap-1.5">👤 <strong id="logged-user-name">Utilizador</strong></span>
+              <span id="logged-role-badge" class="bg-emerald-700 text-[10px] px-1.5 py-0.5 rounded uppercase font-semibold text-white">ADMIN</span>
+              <span class="text-emerald-600">|</span>
+              <button onclick="openChangePassModal()" class="text-amber-300 hover:text-white underline text-[11px] transition">Password</button>
+              <button onclick="handleLogout()" class="text-red-300 hover:text-red-100 font-bold ml-1 underline transition">Sair</button>
+            </div>
+
+            <!-- Botão Gerir Convidados (Admin) -->
+            <button id="btn-manage-guests" onclick="openGuestsModal()" class="hidden bg-indigo-700 hover:bg-indigo-600 text-white text-xs font-semibold px-3 py-1.5 rounded-lg shadow-sm transition">
+              👥 Gerir Convidados
+            </button>
+          </div>
+
         </div>
 
-        <div class="flex flex-col sm:flex-row items-stretch sm:items-center gap-3 w-full lg:w-auto">
-          <!-- User Badge, Password e Logout -->
-          <div class="flex items-center justify-between sm:justify-start gap-2 bg-emerald-900/80 px-3 py-1.5 rounded-lg border border-emerald-700/60 text-xs">
-            <span class="text-emerald-100 flex items-center gap-1">👤 <strong id="logged-user-name">Utilizador</strong></span>
-            <span id="logged-role-badge" class="bg-emerald-700 text-[10px] px-1.5 py-0.5 rounded uppercase font-semibold">ADMIN</span>
-            <button onclick="openChangePassModal()" class="text-amber-300 hover:text-white underline ml-1 text-[11px]">Password</button>
-            <button onclick="handleLogout()" class="text-red-300 hover:text-white font-bold ml-2 underline">Sair</button>
-          </div>
-
-          <!-- Botão Gerir Convidados (Apenas Admin) -->
-          <button id="btn-manage-guests" onclick="openGuestsModal()" class="hidden bg-indigo-700 hover:bg-indigo-600 text-white text-xs font-semibold px-3 py-2 rounded-lg shadow-sm transition">
-            👥 Gerir Convidados
-          </button>
-
-          <div class="flex items-center gap-2 bg-emerald-900/60 p-1.5 rounded-lg border border-emerald-700/50">
-            <label for="project-select" class="text-xs font-semibold text-emerald-200 uppercase px-1 whitespace-nowrap">Projeto:</label>
-            <select id="project-select" onchange="changeProject(this.value)" class="bg-white text-slate-800 text-sm font-semibold rounded-md px-3 py-1.5 focus:outline-none focus:ring-2 focus:ring-emerald-400 cursor-pointer w-full sm:w-auto">
+        <!-- LINHA INFERIOR: Controlo de Projetos & Ações Rápida -->
+        <div class="flex flex-col lg:flex-row justify-between items-stretch lg:items-center gap-3">
+          
+          <!-- Seletor e Ações de Projeto -->
+          <div class="flex flex-wrap items-center gap-2 bg-emerald-900/50 p-1.5 rounded-lg border border-emerald-700/50">
+            <label for="project-select" class="text-xs font-bold text-emerald-200 uppercase px-1 whitespace-nowrap">Projeto Ativo:</label>
+            <select id="project-select" onchange="changeProject(this.value)" class="bg-white text-slate-800 text-xs sm:text-sm font-semibold rounded-md px-3 py-1.5 focus:outline-none focus:ring-2 focus:ring-emerald-400 cursor-pointer max-w-[220px] sm:max-w-xs truncate">
               <option value="">A carregar...</option>
             </select>
             
-            <button id="btn-create-proj" onclick="openProjectModal()" title="Criar novo projeto do zero" class="bg-emerald-700 hover:bg-emerald-600 text-white p-1.5 rounded-md text-xs font-semibold transition px-2.5 whitespace-nowrap">
+            <button id="btn-create-proj" onclick="openProjectModal()" title="Criar novo projeto do zero" class="bg-emerald-700 hover:bg-emerald-600 text-white p-1.5 rounded-md text-xs font-semibold transition px-2.5 whitespace-nowrap shadow-sm border border-emerald-600">
               + Novo
             </button>
 
-            <button id="btn-duplicate-proj" onclick="openDuplicateModal()" title="Replicar a estrutura deste projeto" class="bg-amber-600 hover:bg-amber-500 text-white p-1.5 rounded-md text-xs font-semibold transition px-2.5 whitespace-nowrap">
+            <button id="btn-duplicate-proj" onclick="openDuplicateModal()" title="Replicar a estrutura deste projeto" class="bg-amber-600 hover:bg-amber-500 text-white p-1.5 rounded-md text-xs font-semibold transition px-2.5 whitespace-nowrap shadow-sm border border-amber-500">
               📋 Replicar
             </button>
           </div>
 
-          <!-- BOTÃO DE IMPRESSÃO / PDF -->
-          <button onclick="window.print()" title="Imprimir em A4 Paisagem ou Guardar em PDF" class="bg-sky-600 hover:bg-sky-500 text-white font-medium px-3.5 py-2 rounded-lg shadow-sm transition-all flex items-center justify-center gap-1.5 text-sm active:scale-95 whitespace-nowrap">
-            🖨️ Imprimir / PDF
-          </button>
+          <!-- Grupo de Ferramentas & Botão Principal -->
+          <div class="flex flex-wrap items-center gap-2 justify-start lg:justify-end">
+            <!-- EXPORTAR CSV -->
+            <button onclick="exportToCSV()" title="Exportar vista atual para CSV/Excel" class="bg-teal-700 hover:bg-teal-600 text-white font-medium px-3 py-1.5 rounded-lg shadow-sm transition-all flex items-center gap-1.5 text-xs active:scale-95 border border-teal-600 whitespace-nowrap">
+              📊 Exportar CSV
+            </button>
 
-          <!-- BOTÃO PARA ABRIR O QUADRO KANBAN -->
-          <button onclick="openKanbanView()" title="Abrir vista de Quadro Kanban" class="bg-indigo-600 hover:bg-indigo-500 text-white font-medium px-3.5 py-2 rounded-lg shadow-sm transition-all flex items-center justify-center gap-1.5 text-sm active:scale-95 whitespace-nowrap">
-            📋 Quadro Kanban
-          </button>
+            <!-- IMPRESSÃO / PDF -->
+            <button onclick="window.print()" title="Imprimir em A4 Paisagem ou Guardar em PDF" class="bg-sky-700 hover:bg-sky-600 text-white font-medium px-3 py-1.5 rounded-lg shadow-sm transition-all flex items-center gap-1.5 text-xs active:scale-95 border border-sky-600 whitespace-nowrap">
+              🖨️ PDF
+            </button>
 
-          <button onclick="openModalForNew()" class="bg-emerald-600 hover:bg-emerald-500 text-white font-medium px-4 py-2 rounded-lg shadow-sm transition-all flex items-center justify-center gap-2 text-sm active:scale-95">
-            <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4" />
-            </svg>
-            Nova Tarefa
-          </button>
+            <!-- QUADRO KANBAN -->
+            <button onclick="openKanbanView()" title="Abrir vista de Quadro Kanban" class="bg-indigo-700 hover:bg-indigo-600 text-white font-medium px-3 py-1.5 rounded-lg shadow-sm transition-all flex items-center gap-1.5 text-xs active:scale-95 border border-indigo-600 whitespace-nowrap">
+              📋 Kanban
+            </button>
+
+            <!-- NOVA TAREFA (EM DESTAQUE) -->
+            <button onclick="openModalForNew()" class="bg-emerald-500 hover:bg-emerald-400 text-slate-950 font-bold px-3.5 py-1.5 rounded-lg shadow-md transition-all flex items-center gap-1.5 text-xs active:scale-95 ml-auto sm:ml-0 whitespace-nowrap">
+              <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M12 4v16m8-8H4" />
+              </svg>
+              Nova Tarefa
+            </button>
+          </div>
+
         </div>
 
       </div>
     </header>
 
     <!-- Main Container -->
-    <main class="max-w-[98vw] mx-auto px-2 sm:px-4 py-6 flex-grow w-full">
+    <!-- CÓDIGO NOVO (Aproveita 100% da largura do ecrã) -->
+    <main class="w-full px-2 sm:px-3 py-4 flex-grow">
 
       <!-- CABEÇALHO EXCLUSIVO PARA IMPRESSÃO EM DESTAQUE -->
       <div id="print-project-header" class="hidden">
@@ -331,6 +357,11 @@
             </div>
 
             <div class="flex items-center gap-2 w-full sm:w-auto justify-end">
+              <!-- NOVO BOTÃO DE FILTRO: MINHAS AÇÕES -->
+              <button id="btn-my-tasks" onclick="toggleMyTasksFilter()" class="bg-slate-200 hover:bg-indigo-100 text-slate-700 hover:text-indigo-800 border border-slate-300 text-xs font-semibold px-2.5 py-1.5 rounded-lg transition flex items-center gap-1 whitespace-nowrap">
+              👤 Minhas Ações
+            </button>
+
               <input type="text" id="search-input" onkeyup="applyAllFilters()" placeholder="Pesquisar por texto..." class="border border-slate-300 rounded-lg text-xs px-3 py-1.5 w-48 sm:w-64 focus:outline-none focus:ring-2 focus:ring-emerald-500">
               <button onclick="fetchTasks()" class="text-slate-600 hover:text-emerald-700 bg-white border border-slate-200 hover:border-emerald-300 text-xs font-medium px-3 py-1.5 rounded-lg shadow-sm transition flex items-center gap-1.5 whitespace-nowrap">
                 <svg id="refresh-icon" xmlns="http://www.w3.org/2000/svg" class="h-3.5 w-3.5 text-slate-500" fill="none" viewBox="0 0 24 24" stroke="currentColor">
@@ -670,6 +701,7 @@
     let rawTasksData = [];
     let availableProjects = [];
     let selectedKpiFilter = "todos";
+    let isMyTasksOnly = false; // Novo filtro "Minhas Ações"
 
     let draggedRow = null;
 
@@ -828,11 +860,8 @@
         const response = await fetch(fetchUrl);
         const data = await response.json();
 
-        console.log("Resposta recebida dos projetos:", data); // Para inspeção no F12
-
         let projectsList = [];
 
-        // Trata a resposta se for um Array simples ["P1", "P2"] ou um Objeto
         if (Array.isArray(data)) {
           projectsList = data;
         } else if (data && Array.isArray(data.projects)) {
@@ -852,7 +881,6 @@
             select.appendChild(opt);
           });
 
-          // Define o projeto ativo
           if (selectProjectName && availableProjects.includes(selectProjectName)) {
             currentProject = selectProjectName;
           } else {
@@ -911,17 +939,14 @@
         const resObj = await response.json();
 
         if (resObj && resObj.error) {
-          console.error("Erro do servidor:", resObj.error);
           throw new Error(resObj.error);
         }
 
-        // Extrai o array de tarefas da resposta
         rawTasksData = Array.isArray(resObj.tasks) ? resObj.tasks : (Array.isArray(resObj) ? resObj : []);
         
         const notesElem = document.getElementById("project-learning-notes");
         if (notesElem) notesElem.value = resObj.projectNotes || "";
 
-        // Renderiza os dados no ecrã
         populateFilterDropdowns(rawTasksData);
         applyAllFilters();
         updateKPIs(rawTasksData);
@@ -1009,8 +1034,32 @@
       }
     }
 
+    // Função auxiliar para remover acentos e converter para minúsculas
+    function normalizeText(str) {
+      if (!str) return "";
+      return String(str)
+        .normalize("NFD")
+        .replace(/[\u0300-\u036f]/g, "") // Remove acentos (é -> e, ó -> o)
+        .toLowerCase();
+    }
+
+    /* ALTERNAR O ESTADO DO FILTRO "MINHAS AÇÕES" */
+    function toggleMyTasksFilter() {
+      isMyTasksOnly = !isMyTasksOnly;
+      const btn = document.getElementById("btn-my-tasks");
+      
+      if (isMyTasksOnly) {
+        btn.className = "bg-indigo-600 text-white border border-indigo-700 text-xs font-semibold px-2.5 py-1.5 rounded-lg transition flex items-center gap-1 whitespace-nowrap shadow-sm";
+      } else {
+        btn.className = "bg-slate-200 hover:bg-indigo-100 text-slate-700 hover:text-indigo-800 border border-slate-300 text-xs font-semibold px-2.5 py-1.5 rounded-lg transition flex items-center gap-1 whitespace-nowrap";
+      }
+      
+      applyAllFilters();
+    }
+
+    /* APLICAR TODOS OS FILTROS À TABELA */
     function applyAllFilters() {
-      const search = document.getElementById("search-input").value.toLowerCase();
+      const search = normalizeText(document.getElementById("search-input").value);
       const fase = document.getElementById("filter-fase").value;
       const resp = document.getElementById("filter-resp").value;
       const inst = document.getElementById("filter-inst").value;
@@ -1021,28 +1070,76 @@
         if (selectedKpiFilter === "Concluído" && progresso !== "Concluído") return false;
         if (selectedKpiFilter === "pendentes" && progresso === "Concluído") return false;
 
+        // FILTRO "MINHAS AÇÕES": Infralobo ou Hélder Filipe (insensível a maiúsculas e acentos)
+        if (isMyTasksOnly) {
+          const respValNormalized = normalizeText(item.Responsabilidade || item.responsabilidade || "");
+          
+          const hasInfralobo = respValNormalized.includes("infralobo");
+          const hasHelder = respValNormalized.includes("helder"); // Apanha Hélder, Helder, HELDER, etc.
+
+          if (!hasInfralobo && !hasHelder) return false;
+        }
+
         const faseVal = item.Fase || item.fase || "Pré-evento";
         if (fase && faseVal !== fase) return false;
 
         const respVal = item.Responsabilidade || item.responsabilidade || "";
-        if (resp && !respVal.toLowerCase().includes(resp.toLowerCase())) return false;
+        if (resp && !normalizeText(respVal).includes(normalizeText(resp))) return false;
 
         const instVal = item["Instituições / Contactos"] || item["Instituições/ empresas a contactar"] || item.instituicoes || "";
-        if (inst && !instVal.toLowerCase().includes(inst.toLowerCase())) return false;
+        if (inst && !normalizeText(instVal).includes(normalizeText(inst))) return false;
 
         const urgVal = item["Urgência / Importância"] || item["Urgência/ Importância"] || item.urgencia || "Normal";
         if (urgencia && !urgVal.includes(urgencia)) return false;
 
         if (search) {
-          const t = (item.Tarefa || item.tarefa || "").toLowerCase();
-          const n = (item.Notas || item.notas || "").toLowerCase();
-          if (!t.includes(search) && !n.includes(search) && !respVal.toLowerCase().includes(search) && !instVal.toLowerCase().includes(search)) return false;
+          const t = normalizeText(item.Tarefa || item.tarefa || "");
+          const n = normalizeText(item.Notas || item.notas || "");
+          const r = normalizeText(respVal);
+          const i = normalizeText(instVal);
+          if (!t.includes(search) && !n.includes(search) && !r.includes(search) && !i.includes(search)) return false;
         }
 
         return true;
       });
 
       renderTable(filtered);
+    }
+
+    /* EXPORTAÇÃO COMPLETA PARA EXCEL / CSV */
+    function exportToCSV() {
+      if (!rawTasksData || rawTasksData.length === 0) {
+        alert("Não existem dados para exportar.");
+        return;
+      }
+
+      let csvContent = "\uFEFF"; // Garante acentuação correta no Excel em português
+      csvContent += "Fase;Tarefa;Progresso;Responsabilidade;Instituicoes;Urgencia;DataInicio;DataFim;Notas;CriadoPor\n";
+
+      rawTasksData.forEach(item => {
+        const row = [
+          `"${item.Fase || item.fase || ''}"`,
+          `"${(item.Tarefa || item.tarefa || '').replace(/"/g, '""')}"`,
+          `"${item.Progresso || item.progresso || ''}"`,
+          `"${item.Responsabilidade || item.responsabilidade || ''}"`,
+          `"${item["Instituições / Contactos"] || item.instituicoes || ''}"`,
+          `"${item["Urgência / Importância"] || item.urgencia || ''}"`,
+          `"${item["Data de início"] || item.dataInicio || ''}"`,
+          `"${item["Data de fim"] || item.dataFim || ''}"`,
+          `"${(item.Notas || item.notas || '').replace(/"/g, '""')}"`,
+          `"${item["Criado por"] || item.criadoPor || ''}"`
+        ];
+        csvContent += row.join(";") + "\n";
+      });
+
+      const blob = new Blob([csvContent], { type: "text/csv;charset=utf-8;" });
+      const url = URL.createObjectURL(blob);
+      const link = document.createElement("a");
+      link.setAttribute("href", url);
+      link.setAttribute("download", `Plano_Acoes_${currentProject}_${new Date().toISOString().split('T')[0]}.csv`);
+      document.body.appendChild(link);
+      link.click();
+      document.body.removeChild(link);
     }
 
     function setKpiFilter(filter) {
@@ -1066,6 +1163,8 @@
       document.getElementById("filter-resp").value = "";
       document.getElementById("filter-inst").value = "";
       document.getElementById("filter-urgencia").value = "";
+      isMyTasksOnly = false;
+      document.getElementById("btn-my-tasks").className = "bg-slate-200 hover:bg-indigo-100 text-slate-700 hover:text-indigo-800 border border-slate-300 text-xs font-semibold px-2.5 py-1.5 rounded-lg transition flex items-center gap-1 whitespace-nowrap";
       setKpiFilter("todos");
     }
 
@@ -1121,20 +1220,40 @@
         return;
       }
 
-      // Garantir que Hélder Filipe / Admin tem acesso ao botão de apagar
       const isAdmin = !currentUser || 
                       currentUser.role === "admin" || 
                       currentUser.email === "heldgomes@gmail.com" || 
                       (currentUser.nome && currentUser.nome.includes("Hélder"));
 
+      const today = new Date(); today.setHours(0,0,0,0);
+
       data.forEach((item, index) => {
         const row = document.createElement("tr");
-        row.className = "hover:bg-slate-50/80 transition border-b border-slate-100";
-        row.draggable = true;
         
-        // Cálculo do realIndex de forma segura para cada tarefa
         const realIndex = rawTasksData.indexOf(item) !== -1 ? rawTasksData.indexOf(item) : index;
         row.dataset.taskIndex = realIndex;
+        row.draggable = true;
+
+        // VERIFICAÇÃO DE PRAZOS (DESTAQUE VISUAL PARA TAREFAS EM ATRASO OU A EXPIRAR)
+        const dFimStr = item["Data de fim"] || item["Data Fim"] || item.dataFim;
+        const prog = item.Progresso || item.progresso;
+        let deadlineClass = "hover:bg-slate-50/80";
+        let deadlineBadge = "";
+
+        if (dFimStr && prog !== "Concluído" && prog !== "Cancelado") {
+          const dFim = new Date(dFimStr); dFim.setHours(0,0,0,0);
+          const diffDays = Math.ceil((dFim - today) / (1000 * 60 * 60 * 24));
+
+          if (diffDays < 0) {
+            deadlineClass = "bg-red-50/70 hover:bg-red-100/70";
+            deadlineBadge = `<span class="ml-1 text-[9px] bg-red-200 text-red-800 font-bold px-1 rounded">⚠️ Atrasada</span>`;
+          } else if (diffDays <= 2) {
+            deadlineClass = "bg-amber-50/70 hover:bg-amber-100/70";
+            deadlineBadge = `<span class="ml-1 text-[9px] bg-amber-200 text-amber-800 font-bold px-1 rounded">⏳ A expirar</span>`;
+          }
+        }
+
+        row.className = `${deadlineClass} transition border-b border-slate-100`;
 
         // Drag and Drop handlers
         row.addEventListener("dragstart", (e) => {
@@ -1173,7 +1292,7 @@
           phaseBadge = '<span class="px-1.5 py-0.5 rounded text-[10px] font-semibold bg-purple-100 text-purple-700 whitespace-nowrap">Pós-evento</span>';
         }
 
-        const tarefaVal = item.Tarefa || item.tarefa || "-";
+        const tarefaVal = (item.Tarefa || item.tarefa || "-") + deadlineBadge;
 
         // Progresso Badge
         const progressoVal = item.Progresso || item.progresso || "Pendente";
@@ -1271,9 +1390,21 @@
     }
 
     async function saveNewTaskOrder() {
+      // Segurança: Se houver filtros ativos, ignora a reordenação no servidor para não perder dados
+      const searchVal = document.getElementById("search-input").value;
+      const faseVal = document.getElementById("filter-fase").value;
+      const respVal = document.getElementById("filter-resp").value;
+      const instVal = document.getElementById("filter-inst").value;
+      const urgVal = document.getElementById("filter-urgencia").value;
+
+      if (isMyTasksOnly || selectedKpiFilter !== "todos" || searchVal || faseVal || respVal || instVal || urgVal) {
+        alert("⚠️ A reordenação de tarefas por Drag & Drop só é permitida sem filtros ativos (para evitar apagar tarefas ocultas). Limpa os filtros antes de reordenar.");
+        fetchTasks(); // Recarrega para repor a ordem original
+        return;
+      }
+
       const rows = document.querySelectorAll("#task-list > tr");
       const statusLabel = document.getElementById("reorder-status");
-
       const newOrderedTasks = [];
 
       rows.forEach(r => {
@@ -1300,25 +1431,32 @@
         }
       });
 
-      if (newOrderedTasks.length === 0) return;
+      if (newOrderedTasks.length === 0 || newOrderedTasks.length < rawTasksData.length) {
+        console.warn("Reordenação cancelada por incompatibilidade na contagem de tarefas.");
+        return;
+      }
 
       if (statusLabel) statusLabel.classList.remove("hidden");
 
       try {
-        await fetch(API_URL, {
+        const response = await fetch(API_URL, {
           method: "POST",
-          mode: "no-cors",
           headers: { "Content-Type": "text/plain;charset=utf-8" },
           body: JSON.stringify({
             action: "reorderTasks",
             projeto: currentProject,
-            tasks: newOrderedTasks
+            tasks: newOrderedTasks,
+            currentUser: currentUser ? (currentUser.nome || currentUser.email) : "Anónimo"
           })
         });
 
-        setTimeout(fetchTasks, 1200);
+        const res = await response.json();
+        if (res.result !== "success") {
+          alert(res.message || "Não foi possível guardar a nova ordem.");
+          fetchTasks();
+        }
       } catch (err) {
-        alert("Erro ao guardar a nova ordem.");
+        console.error("Erro ao guardar reordenação:", err);
       } finally {
         if (statusLabel) statusLabel.classList.add("hidden");
       }
@@ -1454,7 +1592,7 @@
           method: "POST",
           mode: "no-cors",
           headers: { "Content-Type": "text/plain;charset=utf-8" },
-          body: JSON.stringify({ action: "saveProjectNotes", projeto: currentProject, projectNotes: notes })
+          body: JSON.stringify({ action: "saveProjectNotes", projeto: currentProject, projectNotes: notes, currentUser: currentUser ? (currentUser.nome || currentUser.email) : "Anónimo" })
         });
         alert("Anotações salvas com sucesso para o projeto " + currentProject);
       } catch (e) {
@@ -1539,7 +1677,6 @@
       const item = rawTasksData[index];
       if (!item) return;
 
-      // Utiliza o rowIndex real da folha de cálculo (se não existir, calcula com base na posição + 2)
       const realRowIndex = item.rowIndex || (index + 2);
 
       if (!confirm(`Tem a certeza que deseja apagar a tarefa "${item.Tarefa || item.tarefa || ''}"?`)) return;
@@ -1551,14 +1688,15 @@
           body: JSON.stringify({
             action: "deleteTask",
             projeto: currentProject,
-            rowIndex: realRowIndex
+            rowIndex: realRowIndex,
+            currentUser: currentUser ? (currentUser.nome || currentUser.email) : "Anónimo"
           })
         });
         
         const res = await response.json();
 
         if (res.result === "success" || res.status === "success") {
-          fetchTasks(); // Recarrega a lista atualizada
+          fetchTasks();
         } else {
           alert("Erro ao apagar tarefa: " + (res.message || res.error || "Tente novamente."));
         }
@@ -1645,7 +1783,7 @@
           method: "POST",
           mode: "no-cors",
           headers: { "Content-Type": "text/plain;charset=utf-8" },
-          body: JSON.stringify({ action: "createProject", projectName: nomeProjeto })
+          body: JSON.stringify({ action: "createProject", projectName: nomeProjeto, currentUser: currentUser ? (currentUser.nome || currentUser.email) : "Anónimo" })
         });
 
         closeProjectModal();
