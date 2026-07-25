@@ -11,11 +11,21 @@
 
   <style>
     body { font-family: 'Inter', sans-serif; }
-    .kanban-col { min-height: calc(100vh - 160px); }
-    .kanban-card { cursor: grab; }
+    .kanban-col { min-height: calc(100vh - 180px); }
+    .kanban-card { cursor: grab; touch-action: none; user-select: none; }
     .kanban-card:active { cursor: grabbing; }
     .kanban-card.dragging { opacity: 0.4; }
-    .kanban-dropzone.drag-over { background-color: #f1f5f9; border: 2px dashed #059669; }
+    .kanban-dropzone.drag-over { background-color: #e2e8f0; border: 2px dashed #059669; }
+    
+    /* Indicador visual ao arrastar em dispositivos móveis */
+    .touch-dragging {
+      position: fixed !important;
+      z-index: 9999 !important;
+      pointer-events: none !important;
+      opacity: 0.85 !important;
+      transform: scale(1.03);
+      box-shadow: 0 10px 25px -5px rgba(0, 0, 0, 0.3) !important;
+    }
   </style>
 </head>
 <body class="bg-slate-100 text-slate-800 min-h-screen flex flex-col">
@@ -62,7 +72,7 @@
 
   <!-- KANBAN BOARD (5 COLUNAS) -->
   <main class="max-w-[98vw] mx-auto px-2 py-4 flex-grow w-full overflow-x-auto">
-    <div class="flex gap-3 min-w-[1400px]">
+    <div class="flex gap-3 min-w-[1300px] sm:min-w-[1400px]">
 
       <!-- COLUNA: PENDENTE -->
       <div class="flex-1 bg-slate-200/80 rounded-xl p-3 flex flex-col border border-slate-300">
@@ -131,6 +141,12 @@
     let activeUserName = "Anónimo";
     let currentUser = null;
 
+    // Suporte para Touch (Móvel)
+    let touchCard = null;
+    let touchClone = null;
+    let touchOffsetX = 0;
+    let touchOffsetY = 0;
+
     window.addEventListener("DOMContentLoaded", () => {
       resolveUserAndProject();
     });
@@ -140,7 +156,6 @@
       const urlUser = urlParams.get("user");
       const urlProject = urlParams.get("project");
 
-      // 1. Ler utilizador guardado na sessão
       const savedUserStr = localStorage.getItem("app_user");
       if (savedUserStr) {
         try { currentUser = JSON.parse(savedUserStr); } catch(e){}
@@ -156,7 +171,6 @@
 
       document.getElementById("kanban-logged-user").innerText = activeUserName;
 
-      // 2. Definir Projeto Ativo
       const savedProject = localStorage.getItem("app_active_project") || localStorage.getItem("kanban_active_project");
       if (urlProject && urlProject.trim() !== "") {
         currentProject = decodeURIComponent(urlProject);
@@ -179,7 +193,6 @@
       const role = currentUser ? (currentUser.role || "guest") : "guest";
 
       try {
-        // Envia user e role para filtrar os projetos no backend de acordo com as permissões do convidado
         const response = await fetch(`${API_URL}?action=getProjects&user=${encodeURIComponent(user)}&role=${encodeURIComponent(role)}`, { redirect: "follow" });
         const projects = await response.json();
         select.innerHTML = "";
@@ -259,10 +272,11 @@
         counts[prog]++;
 
         const card = document.createElement("div");
-        card.className = "kanban-card bg-white p-3 rounded-lg shadow-sm border border-slate-200 hover:shadow-md transition space-y-2";
+        card.className = "kanban-card bg-white p-3 rounded-lg shadow-sm border border-slate-200 hover:shadow-md transition space-y-2 relative";
         card.draggable = true;
         card.dataset.index = index;
 
+        // Eventos Desktop (Mouse)
         card.addEventListener("dragstart", () => {
           draggedCardIndex = index;
           card.classList.add("dragging");
@@ -273,6 +287,11 @@
           draggedCardIndex = null;
         });
 
+        // Eventos Mobile (Touch Drag & Drop)
+        card.addEventListener("touchstart", (e) => handleTouchStart(e, index, card), { passive: false });
+        card.addEventListener("touchmove", handleTouchMove, { passive: false });
+        card.addEventListener("touchend", (e) => handleTouchEnd(e, index), { passive: false });
+
         const tName = item.Tarefa || item.tarefa || "Sem nome";
         const fase = item.Fase || item.fase || "Pré-evento";
         const resp = item.Responsabilidade || item.responsabilidade || "";
@@ -282,6 +301,11 @@
         if (urg.includes("Urgente")) urgBadge = '<span class="text-[9px] bg-red-100 text-red-700 px-1.5 py-0.5 rounded font-bold">Urgente</span>';
         else if (urg.includes("Importante")) urgBadge = '<span class="text-[9px] bg-blue-100 text-blue-700 px-1.5 py-0.5 rounded font-bold">Importante</span>';
 
+        // Opções para o Seletor Rápido em Telemóveis
+        const statusOptions = ["Pendente", "Em Curso", "A aguardar por terceiros", "Concluído", "Cancelado"]
+          .map(st => `<option value="${st}" ${st === prog ? 'selected' : ''}>${st}</option>`)
+          .join('');
+
         card.innerHTML = `
           <div class="flex justify-between items-start gap-1">
             <span class="text-[10px] font-bold uppercase tracking-wider text-slate-400">${fase}</span>
@@ -289,6 +313,14 @@
           </div>
           <p class="font-semibold text-xs text-slate-800 leading-snug">${tName}</p>
           ${resp ? `<div class="text-[10px] text-slate-500 flex items-center gap-1">👤 ${resp}</div>` : ''}
+          
+          <!-- Seletor Rápido Móvel (Aparece ao Clicar / Mudar Estado) -->
+          <div class="pt-2 border-t border-slate-100 mt-2 flex justify-between items-center">
+            <span class="text-[9px] text-slate-400 uppercase font-bold">Mover para:</span>
+            <select onchange="updateTaskStatusFromSelect(${index}, this.value)" class="text-[10px] bg-slate-50 border border-slate-200 rounded px-1.5 py-0.5 text-slate-700 font-medium focus:outline-none">
+              ${statusOptions}
+            </select>
+          </div>
         `;
 
         columns[prog].appendChild(card);
@@ -299,6 +331,68 @@
       });
     }
 
+    /* --- LÓGICA DE DRAG AND DROP MÓVEL (TOUCH) --- */
+    function handleTouchStart(e, index, card) {
+      // Ignorar toque se estiver a interagir com o <select>
+      if (e.target.tagName === "SELECT" || e.target.tagName === "OPTION") return;
+
+      draggedCardIndex = index;
+      touchCard = card;
+
+      const touch = e.touches[0];
+      const rect = card.getBoundingClientRect();
+
+      touchOffsetX = touch.clientX - rect.left;
+      touchOffsetY = touch.clientY - rect.top;
+
+      touchClone = card.cloneNode(true);
+      touchClone.classList.add("touch-dragging");
+      touchClone.style.width = `${rect.width}px`;
+      touchClone.style.left = `${touch.clientX - touchOffsetX}px`;
+      touchClone.style.top = `${touch.clientY - touchOffsetY}px`;
+
+      document.body.appendChild(touchClone);
+      card.style.opacity = "0.3";
+    }
+
+    function handleTouchMove(e) {
+      if (!touchClone) return;
+      e.preventDefault();
+
+      const touch = e.touches[0];
+      touchClone.style.left = `${touch.clientX - touchOffsetX}px`;
+      touchClone.style.top = `${touch.clientY - touchOffsetY}px`;
+
+      // Destacar a coluna sob o dedo
+      const elemBelow = document.elementFromPoint(touch.clientX, touch.clientY);
+      document.querySelectorAll(".kanban-dropzone").forEach(dz => dz.classList.remove("drag-over"));
+      if (elemBelow) {
+        const dropzone = elemBelow.closest(".kanban-dropzone");
+        if (dropzone) dropzone.classList.add("drag-over");
+      }
+    }
+
+    async function handleTouchEnd(e, index) {
+      if (!touchClone) return;
+
+      const touch = e.changedTouches[0];
+      const elemBelow = document.elementFromPoint(touch.clientX, touch.clientY);
+
+      if (touchClone) { touchClone.remove(); touchClone = null; }
+      if (touchCard) { touchCard.style.opacity = "1"; touchCard = null; }
+      document.querySelectorAll(".kanban-dropzone").forEach(dz => dz.classList.remove("drag-over"));
+
+      if (elemBelow) {
+        const dropzone = elemBelow.closest(".kanban-dropzone");
+        if (dropzone) {
+          const targetStatus = dropzone.id.replace("col-", "");
+          await changeStatus(index, targetStatus);
+        }
+      }
+      draggedCardIndex = null;
+    }
+
+    /* --- EVENTOS MOUSE / DESKTOP --- */
     function handleDragOver(e) {
       e.preventDefault();
       e.currentTarget.classList.add("drag-over");
@@ -313,22 +407,31 @@
       e.currentTarget.classList.remove("drag-over");
 
       if (draggedCardIndex === null || !rawTasksData[draggedCardIndex]) return;
+      await changeStatus(draggedCardIndex, newStatus);
+    }
 
-      const item = rawTasksData[draggedCardIndex];
+    async function updateTaskStatusFromSelect(index, newStatus) {
+      await changeStatus(index, newStatus);
+    }
+
+    /* --- FUNÇÃO CENTRALIZADA DE ATUALIZAÇÃO --- */
+    async function changeStatus(index, newStatus) {
+      const item = rawTasksData[index];
+      if (!item) return;
+
       const oldStatus = item.Progresso || item.progresso || "Pendente";
-
       if (oldStatus === newStatus) return;
 
       item.Progresso = newStatus;
       item.progresso = newStatus;
       renderKanbanBoard();
 
-      const rowIndex = item.rowIndex || (draggedCardIndex + 2);
+      const realRowIndex = item.rowIndex || (index + 2);
       const custosArray = typeof item.Custos === "string" ? item.Custos : JSON.stringify(item.Custos || []);
 
       const payload = {
         projeto: currentProject,
-        rowIndex: rowIndex,
+        rowIndex: realRowIndex,
         fase: item.Fase || item.fase || "Pré-evento",
         tarefa: item.Tarefa || item.tarefa || "",
         progresso: newStatus,

@@ -438,7 +438,7 @@
                   <div class="flex items-center justify-between"><span>Histórico</span><span id="sort-icon-CriadoPor" class="sort-icon text-slate-400">↕</span></div>
                 </th>
                 
-                <th style="width: 70px;" class="py-2.5 px-2 text-center no-print">Ações</th>
+                <th style="width: 105px;" class="py-2.5 px-2 text-center no-print">Ações</th>
               </tr>
             </thead>
             <tbody id="task-list" class="divide-y divide-slate-100 text-xs">
@@ -1243,10 +1243,10 @@
         }
         auditCell += `</div>`;
 
-        // Botões de Ação utilizando o realIndex calculado
-        const outlookBtn = `<button onclick="openInOutlook(${realIndex})" class="bg-slate-100 hover:bg-sky-50 text-sky-600 hover:text-sky-700 border border-slate-200 rounded px-1.5 py-1 text-[11px] font-medium transition" title="Abrir no Outlook">📅</button>`;
-        const editBtn = `<button onclick="editTask(${realIndex})" class="bg-slate-100 hover:bg-emerald-50 text-slate-600 hover:text-emerald-700 border border-slate-200 rounded px-1.5 py-1 text-[11px] font-medium transition" title="Editar">✏️</button>`;
-        const deleteBtn = isAdmin ? `<button onclick="deleteTask(${realIndex})" class="bg-slate-100 hover:bg-red-50 text-slate-600 hover:text-red-700 border border-slate-200 rounded px-1.5 py-1 text-[11px] font-medium transition" title="Apagar">🗑️</button>` : '';
+        // Botões de Ação otimizados com maior área tátil
+        const outlookBtn = `<button onclick="openInOutlook(${realIndex})" class="bg-slate-100 hover:bg-sky-50 text-sky-600 border border-slate-200 rounded px-2 py-1.5 text-xs font-medium transition active:scale-95" title="Abrir no Outlook">📅</button>`;
+        const editBtn = `<button onclick="editTask(${realIndex})" class="bg-slate-100 hover:bg-emerald-50 text-slate-600 hover:text-emerald-700 border border-slate-200 rounded px-2 py-1.5 text-xs font-medium transition active:scale-95" title="Editar">✏️</button>`;
+        const deleteBtn = isAdmin ? `<button onclick="deleteTask(${realIndex})" class="bg-slate-100 hover:bg-red-50 text-red-600 border border-slate-200 rounded px-2 py-1.5 text-xs font-medium transition active:scale-95" title="Apagar">🗑️</button>` : '';
 
         row.innerHTML = `
           ${dragHandle}
@@ -1262,7 +1262,9 @@
           <td class="p-2 text-slate-500 text-[10px] leading-tight break-words">${notasVal}</td>
           <td class="p-2 text-center overflow-hidden no-print">${photosCell}</td>
           <td class="p-2 overflow-hidden">${auditCell}</td>
-          <td class="p-2 text-center overflow-hidden no-print"><div class="flex items-center justify-center gap-1">${outlookBtn}${editBtn}${deleteBtn}</div></td>
+          <td class="p-2 text-center overflow-hidden no-print">
+            <div class="flex items-center justify-center gap-1.5 min-w-[95px]">${outlookBtn}${editBtn}${deleteBtn}</div>
+          </td>
         `;
         tbody.appendChild(row);
       });
