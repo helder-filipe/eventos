@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<html lang="pt">
+<html lang="pt-PT">
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
@@ -7,10 +7,10 @@
   
   <link rel="icon" type="image/png" href="projeto.png">
   <script src="https://cdn.tailwindcss.com"></script>
-  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+
 
   <style>
-    body { font-family: 'Inter', sans-serif; }
+    body { font-family: Inter, ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif; }
     .kanban-col { min-height: calc(100vh - 180px); }
     .kanban-card { cursor: grab; touch-action: none; user-select: none; }
     .kanban-card:active { cursor: grabbing; }
@@ -26,6 +26,15 @@
       transform: scale(1.03);
       box-shadow: 0 10px 25px -5px rgba(0, 0, 0, 0.3) !important;
     }
+
+    body { background: #f3f7f5; }
+    header { background: linear-gradient(115deg, #064e3b 0%, #047857 58%, #0f766e 100%); box-shadow: 0 8px 24px rgba(6, 78, 59, .16); }
+    .kanban-col { min-height: calc(100vh - 180px); }
+    .kanban-dropzone { transition: background-color .15s ease, border-color .15s ease; }
+    .kanban-card { border-radius: 12px; box-shadow: 0 2px 8px rgba(15,23,42,.045); transition: transform .15s ease, box-shadow .15s ease; }
+    .kanban-card:hover { transform: translateY(-2px); box-shadow: 0 8px 18px rgba(15,23,42,.10); }
+    .kanban-dropzone.drag-over { background: #d1fae5; border-color: #059669; }
+    @media (prefers-reduced-motion: reduce) { *, *::before, *::after { transition-duration: .01ms !important; animation-duration: .01ms !important; } }
   </style>
 </head>
 <body class="bg-slate-100 text-slate-800 min-h-screen flex flex-col">
@@ -146,6 +155,7 @@
     let touchClone = null;
     let touchOffsetX = 0;
     let touchOffsetY = 0;
+    let activeTouchDropzone = null;
 
     window.addEventListener("DOMContentLoaded", () => {
       resolveUserAndProject();
@@ -264,6 +274,7 @@
       });
 
       const counts = { "Pendente": 0, "Em Curso": 0, "A aguardar por terceiros": 0, "Concluído": 0, "Cancelado": 0 };
+      const fragments = Object.fromEntries(Object.keys(columns).map(k => [k, document.createDocumentFragment()]));
 
       rawTasksData.forEach((item, index) => {
         let prog = item.Progresso || item.progresso || "Pendente";
@@ -323,10 +334,11 @@
           </div>
         `;
 
-        columns[prog].appendChild(card);
+        fragments[prog].appendChild(card);
       });
 
       Object.keys(counts).forEach(k => {
+        columns[k].appendChild(fragments[k]);
         document.getElementById(`count-${k}`).innerText = counts[k];
       });
     }
@@ -365,10 +377,11 @@
 
       // Destacar a coluna sob o dedo
       const elemBelow = document.elementFromPoint(touch.clientX, touch.clientY);
-      document.querySelectorAll(".kanban-dropzone").forEach(dz => dz.classList.remove("drag-over"));
-      if (elemBelow) {
-        const dropzone = elemBelow.closest(".kanban-dropzone");
-        if (dropzone) dropzone.classList.add("drag-over");
+      const nextDropzone = elemBelow ? elemBelow.closest(".kanban-dropzone") : null;
+      if (activeTouchDropzone !== nextDropzone) {
+        activeTouchDropzone?.classList.remove("drag-over");
+        nextDropzone?.classList.add("drag-over");
+        activeTouchDropzone = nextDropzone;
       }
     }
 
@@ -380,7 +393,8 @@
 
       if (touchClone) { touchClone.remove(); touchClone = null; }
       if (touchCard) { touchCard.style.opacity = "1"; touchCard = null; }
-      document.querySelectorAll(".kanban-dropzone").forEach(dz => dz.classList.remove("drag-over"));
+      activeTouchDropzone?.classList.remove("drag-over");
+      activeTouchDropzone = null;
 
       if (elemBelow) {
         const dropzone = elemBelow.closest(".kanban-dropzone");
